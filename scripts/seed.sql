@@ -1,0 +1,2 @@
+-- TODO: Implement SQL seeding for off-chain data
+-- e.g., initial galleries, users, etc.
