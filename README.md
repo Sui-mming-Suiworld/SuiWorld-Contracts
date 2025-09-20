@@ -1,8 +1,11 @@
-A SocialFi platform on the Sui blockchain.
-=======
+# SuiWorld - A SocialFi platform for SUI
+
 ## SSSS (Super Simple Summary for SuiWorld)
 
-- SuiWorld는 Sui 블록체인 위에서 고퀄리티 인텔의 생산·검증·보상을 선순환시키는 SocialFi 플랫폼입니다. zkLogin 기반의 쉬운 온보딩과 피드 중심 UX를 제공하고, SWT 토크노믹스로 글 작성·리뷰·투표 등 기여를 정량화 하여 보상/페널티를 자동화합니다. Manager NFT를 보유한 12명의 커뮤니티 매니저가 온체인 투표로 메세지를 하이프/스캠으로 분류해 품질을 관리하며, SUI<>SWT 스왑과 Wormhole NTT 연동으로 유동성과 에어드롭 리워드를 제공합니다. 프론트엔드(Next.js)–백엔드(FastAPI)–DB(PostgreSQL)–Move 모듈 아키텍처로 구성되어, Yaps 기반 InfoFi의 한계를 해결하고 지속 가능한 정보 생태계를 지향합니다.
+- SuiWorld는 Sui 블록체인 위에서 고퀄리티 인텔리의 생산·검증·보상을 선순환시키는 SocialFi 플랫폼으로, Yaps 기반 InfoFi의 한계를 해결하고 지속 가능한 정보 생태계를 지향하고자 구현되었습니다.
+- 지속가능한 생태계를 위해, zkLogin 기반의 쉬운 온보딩과 피드 중심 UX를 제공하고, SWT 토크노믹스로 글 작성·리뷰·투표 등 기여를 정량화 하여 보상/페널티를 자동화합니다.
+- Manager NFT를 보유한 12명의 커뮤니티 매니저가 온체인 투표로 메세지를 하이프/스캠으로 분류해 품질을 관리하며, SUI<>SWT 스왑과 Wormhole NTT 연동으로 유동성과 에어드롭 리워드를 제공합니다.
+- 프론트엔드(Next.js)–백엔드(FastAPI)–DB(PostgreSQL)–Move 모듈 아키텍처로 구성되며, Move 모듈 패키지 배포를 통해 새로운 infoFi 플랫폼 개발을 지원할 수 있습니다.
 
 
 ## Problem Solving of InfoFi Product
@@ -42,14 +45,6 @@ Rough Guide
                         [ Sui Blockchain (Move Modules) ]
 ```
 
-## Stack
-
-### Frontend
- -
-### Backend
- -
-### Onchain Metric (Sui Move)
- -
 ## Features of our product
 
 ### Onboarding with zkLogin
@@ -91,7 +86,7 @@ Rough Guide
  - 다만, NFT 거래를 통하여 강력하게 프로젝트에 참여하고자 하는 유저 참여 가능
  - 초기 설정의 중앙화 but 시장 거래를 통한 외부 참여를 허용하는 것
  - 이 경우 NFT 가치 훼손/프로젝트의 영향력 훼손을 막기 위해 커뮤니티 장악에 대한 자정작용이 수행될 것 기대
- - 그렇지 않은 경우를 위하여, Manager Resolve(매니저 간 악의적 관리자 투표)를 통하여 권한 박탈 기능 구현.(추후 설명)
+ - 그렇지 않은 경우를 위하여, Manager Resolve(매니저 간 악의적 관리자 투표)를 통하여 권한 박탈 기능 구현. (추후 설명)
  - 이를 위해 Manager Candidate list를 보유, NFT가 burn 되는 경우 차기 Candidate에게 Manager NFT Mint
 
 ### Message Vote (Review)
@@ -121,8 +116,7 @@ Rough Guide
 - zkLogin을 통한 월렛 생성 > 프로필 생성 > SUI 전송 > SUI<>SWT Swap > 메세지 작성/상호작용 등 수행 > 다수의 Like 받을 시 Under-Review 전환 > Review 결과에 따른 보상 제공 > NTT Token Random Airdrop 당첨
 ### Manager
 - (Manager NFT 보유자) > Mypage에서 Under-review 상태의 메세지들 검토 및 투표 > 투표 보상 제공 > (if) 커뮤니티 활동 중 악의적인 Manager의 행위 발견 시 Resolve 신청 및 투표
-## Local Runs
--
+
 ## Further Improvement Things
 - More Effective Tokenomics : SWT token burn 등 지속가능한 수준에서의 토큰 공급량을 감소 시킬 수 있는 요인 제시(SWT Holder 가치 향상)
 - Add Varius SWT<>items pair : SWT token의 활용도 향상을 위한 커뮤니티 내 아이템/기능 구매 서비스 제공
@@ -209,12 +203,12 @@ sui client call \
 
 ## Team & Roles
 ### Team Lead
-- crab (Hyunjae Chung) : Coordinator, Contracts(Sui Move), backend
+- crab (Hyunjae Chung) : Contracts(Sui Move, Wormhole NTT), backend
 ### Members
-- paori (Yongwon Seo) : Frontend, UX Design,
-- Jaewon (Jaewon Kim) : Backend, DB, Wallet(zkLogin)
-- Noru (Juhwan Park) : Frontend
-- Seungjun (Seungjun Oh) : PM, Documenation, PR
+- paori (Yongwon Seo) : Coordinator, Frontend, UX Design
+- Jaewon (Jaewon Kim) : Backend, DB, Wallet(zkLogin), Documenation
+- Noru (Juhwan Park) : Frontend, Design
+- Seungjun (Seungjun Oh) : PM, Web(Lending page), PR
 
 ## License & Dependency
 GNU General Public License v3.0
