@@ -17,39 +17,26 @@ def client() -> TestClient:
     return TestClient(app)
 
 
-@pytest.mark.parametrize(
-    "gallery_slug, expected_ids",
-    [
-        ("degen", ["msg-001", "msg-002", "msg-003"]),
-        ("DEV", ["msg-004"]),
-        ("unknown", []),
-    ],
-)
-def test_list_messages_filters_by_gallery(client: TestClient, gallery_slug: str, expected_ids: List[str]) -> None:
-    response = client.get("/messages", params={"gallery_slug": gallery_slug})
+def test_list_messages_returns_home_feed(client: TestClient) -> None:
+    response = client.get("/messages")
     assert response.status_code == 200
 
     payload = response.json()
-    identifiers = [item["id"] for item in payload]
-    assert identifiers == expected_ids
+    assert [item["id"] for item in payload] == ["msg-001", "msg-002", "msg-003", "msg-004"]
 
-    if gallery_slug.lower() == "degen":
-        first = payload[0]
-        assert first["metrics"]["displayed_status"] == "NORMAL"
-        assert first["metrics"]["likes_to_threshold"] == 1
-        assert first["metrics"]["alerts_to_threshold"] == 19
-    elif gallery_slug.lower() == "dev":
-        first = payload[0]
-        assert first["metrics"]["displayed_status"] == "HYPED"
-        assert first["metrics"]["likes_to_threshold"] is None
-        assert first["metrics"]["alerts_to_threshold"] is None
+    first = payload[0]
+    assert first["metrics"]["displayed_status"] == "NORMAL"
+    assert first["metrics"]["likes_to_threshold"] == 1
+    assert first["metrics"]["alerts_to_threshold"] == 19
+
+    hyped = payload[-1]
+    assert hyped["metrics"]["displayed_status"] == "HYPED"
+    assert hyped["metrics"]["likes_to_threshold"] is None
+    assert hyped["metrics"]["alerts_to_threshold"] is None
 
 
 def test_list_messages_search_matches_content_and_tags(client: TestClient) -> None:
-    response = client.get(
-        "/messages",
-        params={"gallery_slug": "degen", "search": "vault"},
-    )
+    response = client.get("/messages", params={"search": "vault"})
     assert response.status_code == 200
 
     payload = response.json()
@@ -58,7 +45,6 @@ def test_list_messages_search_matches_content_and_tags(client: TestClient) -> No
 
 def test_list_messages_tag_filter_modes(client: TestClient) -> None:
     and_params = [
-        ("gallery_slug", "degen"),
         ("tags", "restaking"),
         ("tags", "strategy"),
         ("tag_mode", "and"),
@@ -68,7 +54,6 @@ def test_list_messages_tag_filter_modes(client: TestClient) -> None:
     assert [item["id"] for item in response.json()] == ["msg-001"]
 
     or_params = [
-        ("gallery_slug", "degen"),
         ("tags", "restaking"),
         ("tags", "risk"),
         ("tag_mode", "or"),
@@ -79,14 +64,11 @@ def test_list_messages_tag_filter_modes(client: TestClient) -> None:
 
 
 def test_list_messages_sort_and_status_derivation(client: TestClient) -> None:
-    response = client.get(
-        "/messages",
-        params={"gallery_slug": "degen", "sort": "likes"},
-    )
+    response = client.get("/messages", params={"sort": "likes"})
     assert response.status_code == 200
 
     payload = response.json()
-    assert [item["id"] for item in payload] == ["msg-002", "msg-001", "msg-003"]
+    assert [item["id"] for item in payload] == ["msg-002", "msg-001", "msg-004", "msg-003"]
 
     top_entry = payload[0]["metrics"]
     assert top_entry["base_status"] == "NORMAL"
@@ -101,10 +83,7 @@ def test_list_messages_sort_and_status_derivation(client: TestClient) -> None:
 
 
 def test_list_messages_search_is_case_insensitive(client: TestClient) -> None:
-    response = client.get(
-        "/messages",
-        params={"gallery_slug": "degen", "search": "BURNER"},
-    )
+    response = client.get("/messages", params={"search": "BURNER"})
     assert response.status_code == 200
 
     payload = response.json()

@@ -10,7 +10,6 @@ router = APIRouter()
 
 @router.get("/", response_model=List[MessageFeedEntry])
 def get_messages(
-    gallery_slug: str = Query(..., description="Slug of the gallery to list messages for."),
     search: Optional[str] = Query(
         default=None,
         description="Case-insensitive search across title, content, creator handle, and tags.",
@@ -29,7 +28,6 @@ def get_messages(
     ),
 ) -> List[MessageFeedEntry]:
     messages = list_messages(
-        gallery_slug,
         search=search,
         tags=tags,
         tag_mode=tag_mode,

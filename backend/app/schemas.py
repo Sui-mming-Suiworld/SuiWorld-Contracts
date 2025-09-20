@@ -32,7 +32,6 @@ class MessageMetrics(BaseModel):
 
 class MessageFeedEntry(BaseModel):
     id: str
-    gallery_slug: str
     title: str
     content: str
     tags: List[str]
@@ -44,7 +43,6 @@ class MessageFeedEntry(BaseModel):
 
 class MessageCreate(BaseModel):
     content: str
-    gallery_slug: str
 
 
 class UserProfile(BaseModel):

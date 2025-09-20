@@ -13,7 +13,6 @@ ALERTS_THRESHOLD = 20
 @dataclass(frozen=True)
 class MessageSeed:
     id: str
-    gallery_slug: str
     title: str
     content: str
     tags: Sequence[str]
@@ -31,7 +30,6 @@ class MessageSeed:
 MESSAGE_SEEDS: Sequence[MessageSeed] = (
     MessageSeed(
         id="msg-001",
-        gallery_slug="degen",
         title="Restaking flywheel on Sui",
         content=(
             "Capturing Sui LST flow by restaking LP receipts into cross-chain credit pools. "
@@ -50,7 +48,6 @@ MESSAGE_SEEDS: Sequence[MessageSeed] = (
     ),
     MessageSeed(
         id="msg-002",
-        gallery_slug="degen",
         title="ZK rollup gas rebates",
         content=(
             "Team proposing to redirect 40% of the foundation rebate into an automation vault."
@@ -68,7 +65,6 @@ MESSAGE_SEEDS: Sequence[MessageSeed] = (
     ),
     MessageSeed(
         id="msg-003",
-        gallery_slug="degen",
         title="Suspicious volume spike",
         content=(
             "Spotting recycled liquidity moving between two burner wallets. Requesting manager eyes."
@@ -86,7 +82,6 @@ MESSAGE_SEEDS: Sequence[MessageSeed] = (
     ),
     MessageSeed(
         id="msg-004",
-        gallery_slug="dev",
         title="Validator telemetry overhaul",
         content=(
             "Shipping a CLI for managers to export gossip metrics into Prometheus through an agent."
@@ -143,7 +138,6 @@ def _build_entry(seed: MessageSeed) -> MessageFeedEntry:
     status_reason = _status_reason(seed)
     return MessageFeedEntry(
         id=seed.id,
-        gallery_slug=seed.gallery_slug,
         title=seed.title,
         content=seed.content,
         tags=list(seed.tags),
@@ -207,20 +201,13 @@ def _sort_entries(entries: Iterable[MessageSeed], sort: str) -> List[MessageSeed
 
 
 def list_messages(
-    gallery_slug: str,
     *,
     search: str | None = None,
     tags: Sequence[str] | None = None,
     tag_mode: str = "or",
     sort: str = "latest",
 ) -> List[MessageFeedEntry]:
-    normalized_gallery = gallery_slug.lower().strip()
-    if not normalized_gallery:
-        return []
-
-    seeds = [seed for seed in MESSAGE_SEEDS if seed.gallery_slug == normalized_gallery]
-    if not seeds:
-        return []
+    seeds = list(MESSAGE_SEEDS)
 
     if search:
         seeds = [seed for seed in seeds if _matches_search(seed, search)]
