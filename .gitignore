@@ -1,0 +1,28 @@
+# OS
+.DS_Store
+
+# env
+*.env
+*.env.*
+.env.local
+
+# build
+.next/
+out/
+dist/
+build/
+coverage/
+.cache/
+.turbo/
+
+# deps
+node_modules/
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# misc
+*.log
+EOF
