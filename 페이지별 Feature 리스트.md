@@ -54,7 +54,7 @@ check 표시 된거는 figma 디자인 상에서 컴포넌트가 존재한다.
 
 작성 성공 이동: 상세 페이지 **checked**
 
-4) Vote / Manager Console (/manager) **아직 화면 없음**
+4) Vote / Manager Console (/manager) **관리자가 마이페이지에 under_review인 글 리스트**
 
 내 매니저 여부: 전역 Manager NFT 소유 확인 **checked**
 
@@ -93,14 +93,17 @@ SWT 발행/풀 설정: 팀 트레저리 30%, 풀 70% 초기화(데브넷 스크�
 
 내 글/댓글/좋아요한 글 목록 **checked**
 
-내 제안/투표 내역(매니저인 경우) **checked**
+내 제안/투표 내역(매니저인 경우) (예정) **checked**
 
-매니저에 의해처리해야될 status가 UNDER_REVIEW인 message들 확인할 수 있는 페이지로 리다이랙트 되는 버튼(report check list)(매니저인 경우)
+매니저에 의해 처리해야될 status가 UNDER_REVIEW인 message들 확인할 수 있는 페이지로 리다이랙트 되는 버튼(매니저인 경우)
+
+관리자 리스트, 관리자명 옆엔 신고 버튼
+신고를 1건이라도 접수당한 관리자 이름은 빨간색으로 바뀌고 누르면 투표 모달이 뜸.
 
 
 7) under_review_list page
  - alert가 20개 이상 쌓여서 spam을 판단하는 proposal에 대한 message들은 빨간색 테두리 message. like가 20개 이상 쌓여서 hype를 판단하는 proposal 대한 message들은 파란색 테두리 message로, 무한스크롤로 나타난다.
- 각 message들마다 agree는 위를 가리키는 엄지척 버튼, reject는 아래를 가리키는 엄지 버튼을 가진다. 이 버튼으로 vote를 수집해 
+ 각 message들마다 agree는 위를 가리키는 엄지척 버튼, reject는 아래를 가리키는 엄지 버튼을 가진다. 이 버튼으로 vote를 수집한다.
 
 
 내 보상/슬래싱 기록: payouts/tx_logs 타임라인 **checked, randomly airdrop (for cooking messages)도 표현 필요**
