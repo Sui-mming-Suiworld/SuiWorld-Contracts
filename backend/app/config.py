@@ -1,12 +1,12 @@
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
+    SUPABASE_URL: str
+    SUPABASE_ANON_KEY: str
+    SUPABASE_SERVICE_ROLE_KEY: str
     DATABASE_URL: str
-    SECRET_KEY: str
-    ALGORITHM: str
-    ACCESS_TOKEN_EXPIRE_MINUTES: int
 
     class Config:
-        env_file = "../../scripts/env.sample"
+        env_file = ".env"
 
 settings = Settings()
