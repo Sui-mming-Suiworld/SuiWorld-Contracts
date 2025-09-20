@@ -1,0 +1,6 @@
+[submodule "move/ethereum-contracts/lib/forge-std"]
+	path = move/ethereum-contracts/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "move/ethereum-contracts/lib/openzeppelin-contracts"]
+	path = move/ethereum-contracts/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
