@@ -29,21 +29,22 @@ Sui <> SWT Swap Pool
     - U : >1000 SWT (ex. comment 등록, likes, alert 등), Who hold Manager NFT(Hyped)
     - D : Who hold Manager NFT
 
-### Hype message interaction
-- over 20 likes -> 12 Manager Vote about Hyped message upgrade -> over 4 agree, update / over 4 disagree, reject
+### proposal func (this is for user's message)
+there is two type of proposal, hyped and scam
+#### Hype message interaction
+- over 20 likes -> 12 Manager Vote about Hyped message upgrade -> over 4 agree, update() / over 4 disagree, reject (둘 중 하나라도 먼저 수행되는 경우 resolved)
 - if Hyped
     - +100SWT for creator (Team -> Creator)
     - +10SWT for Manager (Team -> Manager)
 
-### scam message interaction
+#### scam message interaction
 - over 20 alerts -> 12 Manager Vote about Hyped message upgrade -> over 4 agree, delete / over 4 disagree, reject
 - if deleted
     - -200SWT for creator (Creator -> Team)
     - +10SWT for Manager (Team -> Manager)
 
-### Manager resolve func
- - When Every Manager voted, they have BFT model for check deliberate misjudment.
- - if often misjudgement, they slashed(burned) Manage NFT and Mint New Manager NFT for next expected Manager.
+### Manager_proposal func
+ - manager can open manager_proposal with clicked report button in manager listed page. -> Each manager vote about deactivating manager who was reported -> over 8 agree, they slashed(burned) Manage NFT and Mint New Manager NFT for next expected Manager.
 
 ### Cooking
  - Hyped message를 확인할 수 있는 화면
