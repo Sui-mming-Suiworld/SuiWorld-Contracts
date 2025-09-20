@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .api import auth, galleries, messages, proposals, reactions, swap
+from .api import auth, galleries, messages, proposals, reactions, swap, wallet
 from .config import settings
 from .db import engine
 from .models import Base
@@ -33,8 +33,12 @@ app.include_router(messages.router, prefix="/messages", tags=["messages"])
 app.include_router(reactions.router, prefix="/reactions", tags=["reactions"])
 app.include_router(proposals.router, prefix="/proposals", tags=["proposals"])
 app.include_router(swap.router, prefix="/swap", tags=["swap"])
+app.include_router(wallet.router, tags=["wallet"])
+app.add_exception_handler(wallet.WalletAPIError, wallet.wallet_exception_handler)
+
 
 
 @app.get("/")
 def read_root():
     return {"status": "ok"}
+

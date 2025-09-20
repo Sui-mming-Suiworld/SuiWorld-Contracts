@@ -139,3 +139,11 @@ Rough Guide
 
 ## License & Dependency
 GNU General Public License v3.0
+## Wallet Backend Setup
+
+1. Copy scripts/env.sample to .env and populate the Sui fields: SUIWORLD_PACKAGE_ID, SUIWORLD_SWAP_POOL_ID, the treasury addresses, and price hints.
+2. Create or reuse a Sui keypair that owns the treasury coins. Encode it as Mysten's lag || privkey byte array (flag  x00 for Ed25519), then base64 encode those 33/65 bytes and drop the value into SUIWORLD_SERVICE_KEY.
+3. Fund the service account with enough SUI for gas (~0.005 SUI recommended) and the coins that will be offered for swap (SWT or SUI) so the backend can cover payments.
+4. Restart the FastAPI app so Settings picks up the fresh environment variables before you hit the wallet routes.
+
+The service will refuse swap execution if any of these inputs are missing, returning WALLET_CHAIN_UNAVAILABLE to the frontend.
