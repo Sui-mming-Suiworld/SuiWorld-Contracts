@@ -8,11 +8,10 @@ module suiworld::integration_tests {
     use std::string;
 
     // Import all modules
-    use suiworld::token::{Self, SWT, Treasury, SwapPool};
+    use suiworld::token::{Self, SWT, Treasury};
     use suiworld::manager_nft::{Self, ManagerNFT, ManagerRegistry};
     use suiworld::message::{Self, Message, MessageBoard, UserInteractions};
     use suiworld::vote::{Self, Proposal, VotingSystem, ManagerVoteHistory};
-    use suiworld::swap::{Self};
     use suiworld::rewards::{Self, RewardSystem};
     use suiworld::slashing::{Self, SlashingSystem};
 
@@ -60,43 +59,13 @@ module suiworld::integration_tests {
             slashing::test_init(ctx(scenario));
         };
 
-        // Add SWT to treasury and swap pool
+        // Add SWT to treasury for testing
         next_tx(scenario, @0x0);
         {
             let mut treasury = test::take_shared<Treasury>(scenario);
             // Add 10M SWT to treasury for testing
             token::test_mint_and_add_to_treasury(&mut treasury, 10_000_000_000_000, ctx(scenario));
             test::return_shared(treasury);
-        };
-
-        // Initialize swap pool with liquidity
-        next_tx(scenario, @0x0);
-        {
-            let mut swap_pool = test::take_shared<SwapPool>(scenario);
-            let mut treasury = test::take_shared<Treasury>(scenario);
-
-            // Transfer SWT from treasury for liquidity
-            token::transfer_from_treasury(&mut treasury, 10_000_000_000, @0x0, ctx(scenario)); // 10k SWT
-
-            test::return_shared(swap_pool);
-            test::return_shared(treasury);
-        };
-
-        // Add liquidity to swap pool
-        next_tx(scenario, @0x0);
-        {
-            let mut swap_pool = test::take_shared<SwapPool>(scenario);
-
-            // Get the SWT coin we just received
-            let swt_coin = test::take_from_sender<Coin<SWT>>(scenario);
-
-            // Create SUI coin for liquidity (1 SUI)
-            let sui_coin = mint_for_testing<SUI>(1_000_000_000, ctx(scenario));
-
-            // Add liquidity
-            swap::add_liquidity(&mut swap_pool, sui_coin, swt_coin, ctx(scenario));
-
-            test::return_shared(swap_pool);
         };
 
         next_tx(scenario, @0x0);
@@ -419,81 +388,6 @@ module suiworld::integration_tests {
 
     // ======== Token Economy Tests ========
 
-    #[test]
-    fun test_token_economy_flow() {
-        let mut scenario = init_test_scenario();
-        setup_full_ecosystem(&mut scenario);
-
-        // Step 1: Add liquidity to swap pool
-        next_tx(&mut scenario, TRADER);
-        {
-            let mut pool = test::take_shared<SwapPool>(&mut scenario);
-
-            let sui_coin = mint_for_testing<SUI>(1000_000_000_000, ctx(&mut scenario));
-            let swt_coin = test::take_from_sender<Coin<SWT>>(&mut scenario);
-
-            swap::add_liquidity(&mut pool, sui_coin, swt_coin, ctx(&mut scenario));
-
-            test::return_shared(pool);
-        };
-
-        // Step 2: User1 swaps SUI for SWT
-        next_tx(&mut scenario, USER1);
-        {
-            let mut pool = test::take_shared<SwapPool>(&mut scenario);
-
-            // Swap very small amount to avoid overflow (0.01 SUI)
-            let sui_coin = mint_for_testing<SUI>(10_000_000, ctx(&mut scenario));
-            let swt_coin = swap::swap_sui_to_swt(&mut pool, sui_coin, 0, ctx(&mut scenario));
-
-            // User1 now has additional SWT
-            transfer::public_transfer(swt_coin, USER1);
-            test::return_shared(pool);
-        };
-
-        // Step 3: User1 creates message with swapped tokens
-        next_tx(&mut scenario, USER1);
-        {
-            let mut board = test::take_shared<MessageBoard>(&mut scenario);
-
-            // USER1 might have multiple coins, combine them
-            let mut swt_coin = test::take_from_sender<Coin<SWT>>(&mut scenario);
-            while (test::has_most_recent_for_sender<Coin<SWT>>(&mut scenario)) {
-                let coin = test::take_from_sender<Coin<SWT>>(&mut scenario);
-                coin::join(&mut swt_coin, coin);
-            };
-
-            message::create_message(
-                &mut board,
-                &swt_coin,
-                create_test_hash(b"Traded for SWT"),
-                create_test_hash(b"I swapped SUI for SWT to post this"),
-                vector::empty(),
-                ctx(&mut scenario)
-            );
-
-            test::return_to_sender(&mut scenario, swt_coin);
-            test::return_shared(board);
-        };
-
-        // Step 4: User2 swaps SWT back to SUI
-        next_tx(&mut scenario, USER2);
-        {
-            let mut pool = test::take_shared<SwapPool>(&mut scenario);
-            let mut swt_coin = test::take_from_sender<Coin<SWT>>(&mut scenario);
-
-            // Only swap a very small portion (1 SWT) to avoid overflow
-            let swap_amount = coin::split(&mut swt_coin, 1_000_000, ctx(&mut scenario));
-            let sui_coin = swap::swap_swt_to_sui(&mut pool, swap_amount, 0, ctx(&mut scenario));
-
-            // User2 now has SUI
-            coin::burn_for_testing(sui_coin);
-            test::return_to_sender(&mut scenario, swt_coin); // Return remaining SWT
-            test::return_shared(pool);
-        };
-
-        test::end(scenario);
-    }
 
     // ======== Manager Consensus Tests ========
 
@@ -765,38 +659,6 @@ module suiworld::integration_tests {
             msg_count = msg_count + 1;
         };
 
-        // Perform many swaps
-        let mut swap_count = 0;
-        while (swap_count < 10) {
-            let trader = if (swap_count == 0) @0x9000
-                else if (swap_count == 1) @0x9001
-                else if (swap_count == 2) @0x9002
-                else if (swap_count == 3) @0x9003
-                else if (swap_count == 4) @0x9004
-                else if (swap_count == 5) @0x9005
-                else if (swap_count == 6) @0x9006
-                else if (swap_count == 7) @0x9007
-                else if (swap_count == 8) @0x9008
-                else @0x9009;
-            next_tx(&mut scenario, trader);
-            {
-                let mut pool = test::take_shared<SwapPool>(&mut scenario);
-
-                if (swap_count % 2 == 0) {
-                    let sui_coin = mint_for_testing<SUI>(100_000_000, ctx(&mut scenario));
-                    let swt_coin = swap::swap_sui_to_swt(&mut pool, sui_coin, 0, ctx(&mut scenario));
-                    coin::burn_for_testing(swt_coin);
-                } else {
-                    // Swap in opposite direction with smaller amount
-                    let sui_coin = mint_for_testing<SUI>(50_000_000, ctx(&mut scenario));
-                    let swt_coin = swap::swap_sui_to_swt(&mut pool, sui_coin, 0, ctx(&mut scenario));
-                    coin::burn_for_testing(swt_coin);
-                };
-
-                test::return_shared(pool);
-            };
-            swap_count = swap_count + 1;
-        };
 
         // Verify system still functional
         next_tx(&mut scenario, @0x0);
@@ -804,11 +666,6 @@ module suiworld::integration_tests {
             let board = test::take_shared<MessageBoard>(&mut scenario);
             // Check would require get_total_messages function
             test::return_shared(board);
-
-            let pool = test::take_shared<SwapPool>(&mut scenario);
-            assert!(swap::get_sui_reserve(&pool) > 0, 0);
-            assert!(swap::get_swt_reserve(&pool) > 0, 1);
-            test::return_shared(pool);
         };
 
         test::end(scenario);

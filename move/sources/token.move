@@ -16,12 +16,6 @@ module suiworld::token {
         total_minted: u64,
     }
 
-    // Pool for swap operations
-    public struct SwapPool has key {
-        id: UID,
-        swt_balance: Balance<SWT>,
-        sui_balance: Balance<sui::sui::SUI>,
-    }
 
     // Events
     public struct TokenMinted has copy, drop {
@@ -36,8 +30,6 @@ module suiworld::token {
 
     // Constants
     const TOTAL_SUPPLY: u64 = 100_000_000_000_000; // 100M SWT with 6 decimals
-    const TREASURY_PERCENTAGE: u64 = 30;
-    const POOL_PERCENTAGE: u64 = 70;
     const DECIMALS: u8 = 6;
 
     // Error codes
@@ -58,33 +50,18 @@ module suiworld::token {
 
         // Mint total supply
         let total_supply_coin = coin::mint(&mut treasury_cap, TOTAL_SUPPLY, ctx);
-        let mut total_balance = coin::into_balance(total_supply_coin);
+        let total_balance = coin::into_balance(total_supply_coin);
 
-        // Calculate treasury and pool amounts
-        let treasury_amount = (TOTAL_SUPPLY * TREASURY_PERCENTAGE) / 100;
-        let _pool_amount = (TOTAL_SUPPLY * POOL_PERCENTAGE) / 100;
-
-        // Split balances for treasury and pool
-        let treasury_balance = balance::split(&mut total_balance, treasury_amount);
-        let pool_balance = total_balance;
-
-        // Create treasury
+        // All initial supply goes to treasury
+        // External DEX liquidity will be added separately
         let treasury = Treasury {
             id: object::new(ctx),
-            balance: treasury_balance,
+            balance: total_balance,
             total_minted: TOTAL_SUPPLY,
         };
 
-        // Create swap pool
-        let swap_pool = SwapPool {
-            id: object::new(ctx),
-            swt_balance: pool_balance,
-            sui_balance: balance::zero(),
-        };
-
-        // Share objects
+        // Share treasury
         transfer::share_object(treasury);
-        transfer::share_object(swap_pool);
 
         // Freeze metadata
         transfer::public_freeze_object(metadata);
@@ -96,7 +73,7 @@ module suiworld::token {
     #[test_only]
     public fun test_init(ctx: &mut TxContext) {
         // Simplified test init without currency creation
-        // Just create empty treasury and pool for testing
+        // Just create empty treasury for testing
         use sui::balance;
 
         // Create treasury with empty balance for testing
@@ -106,15 +83,7 @@ module suiworld::token {
             total_minted: 0,
         };
 
-        // Create swap pool with empty balance for testing
-        let swap_pool = SwapPool {
-            id: object::new(ctx),
-            swt_balance: balance::zero<SWT>(),
-            sui_balance: balance::zero(),
-        };
-
         transfer::share_object(treasury);
-        transfer::share_object(swap_pool);
     }
 
     #[test_only]
@@ -182,20 +151,4 @@ module suiworld::token {
         treasury.total_minted
     }
 
-    // SwapPool accessor functions for swap module
-    public fun get_sui_balance(pool: &SwapPool): &Balance<sui::sui::SUI> {
-        &pool.sui_balance
-    }
-
-    public fun get_swt_balance(pool: &SwapPool): &Balance<SWT> {
-        &pool.swt_balance
-    }
-
-    public fun get_mut_sui_balance(pool: &mut SwapPool): &mut Balance<sui::sui::SUI> {
-        &mut pool.sui_balance
-    }
-
-    public fun get_mut_swt_balance(pool: &mut SwapPool): &mut Balance<SWT> {
-        &mut pool.swt_balance
-    }
 }
