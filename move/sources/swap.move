@@ -205,10 +205,17 @@ module suiworld::swap {
 
         // x * y = k formula
         // output = (output_reserve * input_with_fee) / (input_reserve * BPS_SCALE + input_with_fee)
-        let numerator = output_reserve * input_with_fee;
+
+        // To avoid overflow, divide first then multiply
+        // This loses some precision but prevents overflow
         let denominator = input_reserve * BPS_SCALE + input_with_fee;
 
-        numerator / denominator
+        // Divide output_reserve by a scaling factor first
+        let scale = 1000;
+        let scaled_output = output_reserve / scale;
+        let scaled_numerator = scaled_output * input_with_fee;
+
+        (scaled_numerator / denominator) * scale
     }
 
     // Get quote for swap

@@ -14,6 +14,14 @@ module suiworld::manager_nft_tests {
         test::begin(@0x0)
     }
 
+    fun setup_test(scenario: &mut Scenario) {
+        // Initialize the manager_nft module
+        next_tx(scenario, @0x0);
+        {
+            manager_nft::test_init(ctx(scenario));
+        };
+    }
+
     fun create_test_name(i: u64): String {
         if (i == 0) string::utf8(b"Manager Zero")
         else if (i == 1) string::utf8(b"Manager One")
@@ -34,6 +42,7 @@ module suiworld::manager_nft_tests {
     #[test]
     fun test_init_creates_registry() {
         let mut scenario = init_test_scenario();
+        setup_test(&mut scenario);
 
         next_tx(&mut scenario, MANAGER1);
 
@@ -53,6 +62,7 @@ module suiworld::manager_nft_tests {
     #[test]
     fun test_mint_manager_nft_success() {
         let mut scenario = init_test_scenario();
+        setup_test(&mut scenario);
 
         next_tx(&mut scenario, MANAGER1);
 
@@ -75,6 +85,7 @@ module suiworld::manager_nft_tests {
         };
 
         // Verify NFT was received
+        next_tx(&mut scenario, MANAGER1);
         {
             let nft = test::take_from_sender<ManagerNFT>(&mut scenario);
             let (votes, misjudgements) = manager_nft::get_manager_stats(&nft);
@@ -90,6 +101,7 @@ module suiworld::manager_nft_tests {
     #[expected_failure(abort_code = suiworld::manager_nft::EAlreadyManager)]
     fun test_mint_duplicate_manager_fails() {
         let mut scenario = init_test_scenario();
+        setup_test(&mut scenario);
 
         next_tx(&mut scenario, MANAGER1);
 
@@ -124,6 +136,7 @@ module suiworld::manager_nft_tests {
     #[expected_failure(abort_code = suiworld::manager_nft::EMaxManagersReached)]
     fun test_mint_exceeds_max_managers() {
         let mut scenario = init_test_scenario();
+        setup_test(&mut scenario);
 
         next_tx(&mut scenario, @0x0);
 
@@ -175,6 +188,7 @@ module suiworld::manager_nft_tests {
     #[test]
     fun test_transfer_manager_nft_success() {
         let mut scenario = init_test_scenario();
+        setup_test(&mut scenario);
 
         next_tx(&mut scenario, MANAGER1);
 
@@ -192,6 +206,7 @@ module suiworld::manager_nft_tests {
         };
 
         // Transfer NFT to MANAGER2
+        next_tx(&mut scenario, MANAGER1);
         {
             let mut registry = test::take_shared<ManagerRegistry>(&mut scenario);
             let nft = test::take_from_sender<ManagerNFT>(&mut scenario);
@@ -225,6 +240,7 @@ module suiworld::manager_nft_tests {
     #[expected_failure(abort_code = suiworld::manager_nft::EAlreadyManager)]
     fun test_transfer_to_existing_manager_fails() {
         let mut scenario = init_test_scenario();
+        setup_test(&mut scenario);
 
         next_tx(&mut scenario, MANAGER1);
 
@@ -252,6 +268,7 @@ module suiworld::manager_nft_tests {
         };
 
         // Try to transfer to MANAGER2 who already has an NFT
+        next_tx(&mut scenario, MANAGER1);
         {
             let mut registry = test::take_shared<ManagerRegistry>(&mut scenario);
             let nft = test::take_from_sender<ManagerNFT>(&mut scenario);
@@ -275,6 +292,7 @@ module suiworld::manager_nft_tests {
     #[test]
     fun test_slash_manager_nft_success() {
         let mut scenario = init_test_scenario();
+        setup_test(&mut scenario);
 
         next_tx(&mut scenario, MANAGER1);
 
@@ -292,6 +310,7 @@ module suiworld::manager_nft_tests {
         };
 
         // Increment misjudgements to threshold
+        next_tx(&mut scenario, MANAGER1);
         {
             let mut nft = test::take_from_sender<ManagerNFT>(&mut scenario);
 
@@ -307,6 +326,7 @@ module suiworld::manager_nft_tests {
         };
 
         // Slash the NFT
+        next_tx(&mut scenario, MANAGER1);
         {
             let mut registry = test::take_shared<ManagerRegistry>(&mut scenario);
             let nft = test::take_from_sender<ManagerNFT>(&mut scenario);
@@ -331,6 +351,7 @@ module suiworld::manager_nft_tests {
     #[expected_failure(abort_code = suiworld::manager_nft::ETooManyMisjudgements)]
     fun test_slash_without_enough_misjudgements_fails() {
         let mut scenario = init_test_scenario();
+        setup_test(&mut scenario);
 
         next_tx(&mut scenario, MANAGER1);
 
@@ -347,6 +368,7 @@ module suiworld::manager_nft_tests {
             test::return_shared(registry);
         };
 
+        next_tx(&mut scenario, MANAGER1);
         {
             let mut nft = test::take_from_sender<ManagerNFT>(&mut scenario);
             manager_nft::increment_misjudgement_count(&mut nft);
@@ -354,6 +376,7 @@ module suiworld::manager_nft_tests {
         };
 
         // Try to slash with insufficient misjudgements
+        next_tx(&mut scenario, MANAGER1);
         {
             let mut registry = test::take_shared<ManagerRegistry>(&mut scenario);
             let nft = test::take_from_sender<ManagerNFT>(&mut scenario);
@@ -376,6 +399,7 @@ module suiworld::manager_nft_tests {
     #[test]
     fun test_increment_vote_count() {
         let mut scenario = init_test_scenario();
+        setup_test(&mut scenario);
 
         next_tx(&mut scenario, MANAGER1);
 
@@ -393,6 +417,7 @@ module suiworld::manager_nft_tests {
         };
 
         // Increment vote count multiple times
+        next_tx(&mut scenario, MANAGER1);
         {
             let mut nft = test::take_from_sender<ManagerNFT>(&mut scenario);
 
@@ -414,6 +439,7 @@ module suiworld::manager_nft_tests {
     #[test]
     fun test_is_manager_check() {
         let mut scenario = init_test_scenario();
+        setup_test(&mut scenario);
 
         next_tx(&mut scenario, MANAGER1);
 
@@ -448,6 +474,7 @@ module suiworld::manager_nft_tests {
     #[test]
     fun test_empty_name_and_description() {
         let mut scenario = init_test_scenario();
+        setup_test(&mut scenario);
 
         next_tx(&mut scenario, MANAGER1);
 
@@ -473,6 +500,7 @@ module suiworld::manager_nft_tests {
     #[test]
     fun test_max_stats_values() {
         let mut scenario = init_test_scenario();
+        setup_test(&mut scenario);
 
         next_tx(&mut scenario, MANAGER1);
 
@@ -490,6 +518,7 @@ module suiworld::manager_nft_tests {
         };
 
         // Increment stats many times
+        next_tx(&mut scenario, MANAGER1);
         {
             let mut nft = test::take_from_sender<ManagerNFT>(&mut scenario);
 

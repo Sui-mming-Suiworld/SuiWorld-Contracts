@@ -94,6 +94,7 @@ module suiworld::vote {
     const EProposalNotOpen: u64 = 3;
     const EInvalidProposalType: u64 = 4;
     const EQuorumNotReached: u64 = 5;
+    const EMessageNotUnderReview: u64 = 6;
 
     // Initialize voting system
     fun init(ctx: &mut TxContext) {
@@ -127,6 +128,9 @@ module suiworld::vote {
         ctx: &mut TxContext
     ): ID {
         assert!(proposal_type <= PROPOSAL_TYPE_SCAM, EInvalidProposalType);
+
+        // Only allow proposals for messages under review
+        assert!(message::is_under_review(message), EMessageNotUnderReview);
 
         let message_id = object::id(message);
         let proposer = tx_context::sender(ctx);

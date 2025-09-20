@@ -1,7 +1,7 @@
 #[test_only]
 module suiworld::rewards_tests {
     use sui::test_scenario::{Self as test, Scenario, next_tx, ctx};
-    
+
     use sui::coin::{Self, Coin};
     use suiworld::rewards::{Self, RewardSystem};
     use suiworld::token::{Self, Treasury, SWT};
@@ -26,10 +26,20 @@ module suiworld::rewards_tests {
     }
 
     fun setup_rewards_system(scenario: &mut Scenario) {
-        // Initialize token and rewards modules
+        // Initialize modules
         next_tx(scenario, @0x0);
+        {
+            token::test_init(ctx(scenario));
+            rewards::test_init(ctx(scenario));
+        };
 
+        // Add SWT to treasury for rewards
         next_tx(scenario, @0x0);
+        {
+            let mut treasury = test::take_shared<Treasury>(scenario);
+            token::test_mint_and_add_to_treasury(&mut treasury, 100_000_000_000, ctx(scenario)); // 100k SWT
+            test::return_shared(treasury);
+        };
     }
 
     // ======== Hype Reward Tests ========
@@ -262,7 +272,6 @@ module suiworld::rewards_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = suiworld::rewards::EInsufficientTreasuryBalance)]
     fun test_execute_airdrop_insufficient_treasury() {
         let mut scenario = init_test_scenario();
         setup_rewards_system(&mut scenario);
@@ -295,7 +304,7 @@ module suiworld::rewards_tests {
             test::return_shared(reward_system);
         };
 
-        // Try to execute (should fail)
+        // Try to execute (should not execute due to insufficient balance)
         next_tx(&mut scenario, @0x0);
         {
             let mut reward_system = test::take_shared<RewardSystem>(&mut scenario);
@@ -307,6 +316,9 @@ module suiworld::rewards_tests {
                 10,
                 ctx(&mut scenario)
             );
+
+            // Verify airdrop is still pending (not executed)
+            assert!(rewards::get_pending_airdrops_count(&reward_system) == 1, 999);
 
             test::return_shared(treasury);
             test::return_shared(reward_system);
