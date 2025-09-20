@@ -62,12 +62,8 @@ two chain link needed.
 (ex. ETH, SOL)
 
 - SuiWorld is for a Sui Ecosystem but nowadays there's so many multichain products.
-- So we also can use a other native tokens for buy a SWT tokens. When they want to buy SWT, transfer Native token and Swap with SUI, and use SUI<>SWT Swap
-- So, In Team's Treasury, there is some ETH, SOL now.
-- in Weekly Period, for cooking message makers, randomly airdrop NTT Transfer tokens.
+- Provide a Wormhole that converts native ETH and SOL to Wormhole Bridged ETH and Wormhole Bridged SOL using Native Token Transfer.
+- The functionality to swap SUI with SWT, Wormhole Bridged ETH with SWT, and Wormhole Bridged SOL with SWT will not be implemented. Instead, it will use the method of registering a pair on an existing DeFi platform.
 
 - needed function
     - NTT API Call
-    - ETH<>SUI Swap
-    - SOL<>SUI Swap
-    - Token Airdrop

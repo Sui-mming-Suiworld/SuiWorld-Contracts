@@ -61,8 +61,8 @@ Rough Guide
 ### SWT(SuiWorld Token) Tokenmoics
 
  - 총 100,000,000 SWT 발행: 30% Treasury, 70% 유동성/풀 배분.
- - 온체인 SUI<>SWT 스왑 풀을 통해 자산 유입·유출 및 유동성 공급.
- - 필요 기능 : SUI<>SWT Swap
+ - 필요 기능 : native ETH, native SOL을 Wormhole Bridged ETH, Wormhole Bridged SOL로 변환할 수 있는 Wormhole
+
 #### 왜 SUI를 그대로 사용하지 않는가?
  - 이 아이템을 제작하며 차용한 기존 Web2 프로덕트는 바로 싸이월드(Cyworld)였음.
  - 싸이월드는 '도토리'라는 재화를 원화를 통해 구입한 뒤, 이를 바탕으로 플랫폼 내에서 각종 기능들을 결제할 수 있었음. 반대로 도토리를 원화로 전환하는 것도 가능.
@@ -110,11 +110,10 @@ Rough Guide
  - 반복 오판 시 슬래시: Manager NFT 소각 및 차기 후보에게 신규 발행.
  - 필요 기능 : BFT Vote, NFT Burn and Mint
 
-### NTT Token Transfer and swap, Airdrop (with Wormhole NTT)
+### NTT Token Transfer (with Wormhole NTT)
  - 멀티체인 NTT 연동으로 ETH/SOL 등 네이티브 토큰 입금 지원.
- - 네이티브 → SUI 브릿지 후 SUI<>SWT 스왑으로 제품 내 경제권 편입. (NTT<>SWT 토큰 스왑과 동일 결과)
- - 주간 리워드: ‘Cooking’(Hyped) 메시지 작성자에게 NTT 토큰 랜덤 에어드랍.
- - 필요 기능: Wormhole NTT API 호출, ETH<>SUI·SOL<>SUI 스왑, 에어드랍 자동화.
+ - 네이티브 → SUI 브릿지 후 SUI<>SWT 스왑으로 제품 내 경제권 편입 하지만, 스왑은 직접 구현하지 않음 (기존의 DeFi에 새로운 pair를 등록하는 방식 사용) (NTT<>SWT 토큰 스왑과 동일 결과)
+ - 필요 기능: Wormhole NTT API 호출, DeFi에 ETH-SWT, SOL-SWT 페어 등록
 
 
 ## User Journey of SuiWorld (User, Manager)
