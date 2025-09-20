@@ -124,11 +124,52 @@ module suiworld::vote_tests {
         test::return_shared(board);
 
         // Get message ID
+        next_tx(scenario, author);
         let msg = test::take_shared<Message>(scenario);
         let msg_id = object::id(&msg);
         test::return_shared(msg);
 
         msg_id
+    }
+
+    // Helper function to put a message under review by adding enough likes
+    fun trigger_message_review(scenario: &mut Scenario) {
+        // Like message 20 times to trigger review
+        let mut i = 0;
+        while (i < 20) {
+            let user_addr = if (i == 0) { @0x1000 }
+                else if (i == 1) { @0x1001 }
+                else if (i == 2) { @0x1002 }
+                else if (i == 3) { @0x1003 }
+                else if (i == 4) { @0x1004 }
+                else if (i == 5) { @0x1005 }
+                else if (i == 6) { @0x1006 }
+                else if (i == 7) { @0x1007 }
+                else if (i == 8) { @0x1008 }
+                else if (i == 9) { @0x1009 }
+                else if (i == 10) { @0x100A }
+                else if (i == 11) { @0x100B }
+                else if (i == 12) { @0x100C }
+                else if (i == 13) { @0x100D }
+                else if (i == 14) { @0x100E }
+                else if (i == 15) { @0x100F }
+                else if (i == 16) { @0x1010 }
+                else if (i == 17) { @0x1011 }
+                else if (i == 18) { @0x1012 }
+                else { @0x1013 };
+
+            next_tx(scenario, user_addr);
+            {
+                let mut msg = test::take_shared<Message>(scenario);
+                let mut interactions = test::take_shared<UserInteractions>(scenario);
+
+                message::like_message(&mut msg, &mut interactions, ctx(scenario));
+
+                test::return_shared(msg);
+                test::return_shared(interactions);
+            };
+            i = i + 1;
+        };
     }
 
     // ======== Proposal Creation Tests ========
@@ -139,6 +180,9 @@ module suiworld::vote_tests {
         setup_voting_environment(&mut scenario);
 
         let msg_id = create_test_message(&mut scenario, USER1);
+
+        // Trigger review status
+        trigger_message_review(&mut scenario);
 
         // Create HYPE proposal
         next_tx(&mut scenario, PROPOSER);
@@ -158,6 +202,7 @@ module suiworld::vote_tests {
         };
 
         // Verify proposal was created
+        next_tx(&mut scenario, PROPOSER);
         {
             assert!(test::has_most_recent_shared<Proposal>(), 0);
             let proposal = test::take_shared<Proposal>(&mut scenario);
@@ -180,6 +225,9 @@ module suiworld::vote_tests {
         setup_voting_environment(&mut scenario);
 
         let msg_id = create_test_message(&mut scenario, USER1);
+
+        // Trigger review status
+        trigger_message_review(&mut scenario);
 
         // Create SCAM proposal
         next_tx(&mut scenario, PROPOSER);
@@ -257,6 +305,9 @@ module suiworld::vote_tests {
 
         let msg_id = create_test_message(&mut scenario, USER1);
 
+        // Trigger review status for the message
+        trigger_message_review(&mut scenario);
+
         // Create proposal
         next_tx(&mut scenario, PROPOSER);
         {
@@ -309,6 +360,9 @@ module suiworld::vote_tests {
         setup_voting_environment(&mut scenario);
 
         let msg_id = create_test_message(&mut scenario, USER1);
+
+        // Trigger review status
+        trigger_message_review(&mut scenario);
 
         // Create proposal
         next_tx(&mut scenario, PROPOSER);
@@ -369,6 +423,9 @@ module suiworld::vote_tests {
 
         let msg_id = create_test_message(&mut scenario, USER1);
 
+        // Trigger review status
+        trigger_message_review(&mut scenario);
+
         // Create proposal
         next_tx(&mut scenario, PROPOSER);
         {
@@ -419,6 +476,9 @@ module suiworld::vote_tests {
         setup_voting_environment(&mut scenario);
 
         let msg_id = create_test_message(&mut scenario, USER1);
+
+        // Trigger review status
+        trigger_message_review(&mut scenario);
 
         // Create proposal
         next_tx(&mut scenario, PROPOSER);
@@ -481,6 +541,9 @@ module suiworld::vote_tests {
         setup_voting_environment(&mut scenario);
 
         let msg_id = create_test_message(&mut scenario, USER1);
+
+        // Trigger review status
+        trigger_message_review(&mut scenario);
 
         // Create proposal
         next_tx(&mut scenario, PROPOSER);
@@ -545,6 +608,9 @@ module suiworld::vote_tests {
         setup_voting_environment(&mut scenario);
 
         let msg_id = create_test_message(&mut scenario, USER1);
+
+        // Trigger review status
+        trigger_message_review(&mut scenario);
 
         // Create and pass HYPE proposal
         next_tx(&mut scenario, PROPOSER);
@@ -624,6 +690,9 @@ module suiworld::vote_tests {
 
         let msg_id = create_test_message(&mut scenario, USER1);
 
+        // Trigger review status
+        trigger_message_review(&mut scenario);
+
         // Create proposal but don't reach quorum
         next_tx(&mut scenario, PROPOSER);
         {
@@ -692,6 +761,9 @@ module suiworld::vote_tests {
         setup_voting_environment(&mut scenario);
 
         let msg_id = create_test_message(&mut scenario, USER1);
+
+        // Trigger review status
+        trigger_message_review(&mut scenario);
 
         // Create proposal
         next_tx(&mut scenario, PROPOSER);
@@ -791,6 +863,9 @@ module suiworld::vote_tests {
         setup_voting_environment(&mut scenario);
 
         let msg_id = create_test_message(&mut scenario, USER1);
+
+        // Trigger review status
+        trigger_message_review(&mut scenario);
 
         // Create proposal
         next_tx(&mut scenario, PROPOSER);

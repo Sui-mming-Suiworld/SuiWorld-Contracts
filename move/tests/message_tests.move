@@ -34,7 +34,22 @@ module suiworld::message_tests {
     }
 
     fun setup_with_treasury(scenario: &mut Scenario) {
-        // Modules are initialized automatically
+        // Initialize all modules
+        next_tx(scenario, @0x0);
+        {
+            manager_nft::test_init(ctx(scenario));
+            message::test_init(ctx(scenario));
+            token::test_init(ctx(scenario));
+        };
+
+        // Add SWT to treasury for testing
+        next_tx(scenario, @0x0);
+        {
+            let mut treasury = test::take_shared<Treasury>(scenario);
+            token::test_mint_and_add_to_treasury(&mut treasury, MIN_SWT * 100, ctx(scenario));
+            test::return_shared(treasury);
+        };
+
         next_tx(scenario, USER1);
 
         // Distribute SWT to test users
@@ -87,6 +102,7 @@ module suiworld::message_tests {
         };
 
         // Verify message was created and shared
+        next_tx(&mut scenario, USER1);
         {
             assert!(test::has_most_recent_shared<Message>(), 0);
             let msg = test::take_shared<Message>(&mut scenario);
@@ -369,7 +385,17 @@ module suiworld::message_tests {
                 else if (i == 6) @0x1006
                 else if (i == 7) @0x1007
                 else if (i == 8) @0x1008
-                else @0x1009;
+                else if (i == 9) @0x1009
+                else if (i == 10) @0x100A
+                else if (i == 11) @0x100B
+                else if (i == 12) @0x100C
+                else if (i == 13) @0x100D
+                else if (i == 14) @0x100E
+                else if (i == 15) @0x100F
+                else if (i == 16) @0x1010
+                else if (i == 17) @0x1011
+                else if (i == 18) @0x1012
+                else @0x1013;
             next_tx(&mut scenario, alerter);
             {
                 let mut msg = test::take_shared<Message>(&mut scenario);
@@ -416,7 +442,11 @@ module suiworld::message_tests {
 
             test::return_to_sender(&mut scenario, swt_coin);
             test::return_shared(board);
+        };
 
+        // Get message ID
+        next_tx(&mut scenario, USER1);
+        {
             let msg = test::take_shared<Message>(&mut scenario);
             message_id = object::id(&msg);
             test::return_shared(msg);
@@ -445,6 +475,7 @@ module suiworld::message_tests {
         };
 
         // Verify comment was created
+        next_tx(&mut scenario, USER2);
         {
             assert!(test::has_most_recent_shared<Comment>(), 1);
         };

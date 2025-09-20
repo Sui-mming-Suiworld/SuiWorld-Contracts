@@ -125,6 +125,12 @@ module suiworld::manager_nft {
     ) {
         let sender = tx_context::sender(ctx);
 
+        // Check if recipient is already a manager
+        assert!(
+            !vec_set::contains(&registry.managers, &recipient),
+            EAlreadyManager
+        );
+
         // Remove sender from registry
         vec_set::remove(&mut registry.managers, &sender);
 
