@@ -163,7 +163,10 @@ export async function fetchWalletSummary(): Promise<WalletSummary> {
 export async function getSwapQuote(req: SwapQuoteReq): Promise<SwapQuoteResp> {
   return walletRequest<SwapQuoteResp>("/swap/quote", {
     method: "POST",
-    body: req,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
   });
 }
 
@@ -175,7 +178,10 @@ export async function executeSwap(req: SwapExecReq): Promise<SwapExecResp> {
 
   return walletRequest<SwapExecResp>("/swap/execute", {
     method: "POST",
-    body: payload,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
   });
 }
 
