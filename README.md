@@ -42,14 +42,14 @@ Rough Guide
                         [ Sui Blockchain (Move Modules) ]
 ```
 
-## Stack 
+## Stack
 
 ### Frontend
- - 
+ -
 ### Backend
- - 
+ -
 ### Onchain Metric (Sui Move)
- - 
+ -
 ## Features of our product
 
 ### Onboarding with zkLogin
@@ -66,7 +66,7 @@ Rough Guide
 #### 왜 SUI를 그대로 사용하지 않는가?
  - 이 아이템을 제작하며 차용한 기존 Web2 프로덕트는 바로 싸이월드(Cyworld)였음.
  - 싸이월드는 '도토리'라는 재화를 원화를 통해 구입한 뒤, 이를 바탕으로 플랫폼 내에서 각종 기능들을 결제할 수 있었음. 반대로 도토리를 원화로 전환하는 것도 가능.
- - 현재 SuiWorld는 token swap에 기반한 금전적 요소 활용만을 제공하지만, Further Improvement 요소 개발을 위한 재화로써 SWT를 둠으로 프로젝트 확장을 기대할 수 있음. 
+ - 현재 SuiWorld는 token swap에 기반한 금전적 요소 활용만을 제공하지만, Further Improvement 요소 개발을 위한 재화로써 SWT를 둠으로 프로젝트 확장을 기대할 수 있음.
 
 ### Home Message(Feed) & Search
  - 홈 피드가 메인 화면이며 메시지 목록, 정렬/필터, 검색을 제공.
@@ -83,7 +83,7 @@ Rough Guide
  - 매니저는 커뮤니티 내 메세지들에 대한 수정/Vote 권한 보유. 메세지 Vote에 따른 보상 제공
  - Manager NFT 는 Marketplace에서 Tradable함. (Not Soulbound)
  - 필요 기능 : Manager NFT Mint
- 
+
  #### 왜 이러한 형식의 관리를 진행하는가. (양질의 커뮤니티 서비스를 위한 운영 방식 고민)
  - GPT-Generated, Surf 기반 Meaningless한 메시지. 스캠 광고 등을 검열할 존재의 필요
  - 다만 이를 유저 전체 투표, Token holding 비례 등을 활용하게 될 시 고래들에 의한 커뮤니티 중립성, 퀄리티 등 훼손 가능
@@ -108,7 +108,7 @@ Rough Guide
  - 악의적인 매니저를 관리하기 위한 기능.
  - 매니저 간 BFT 모델 투표로 고의적 오판 여부 검증.
  - 반복 오판 시 슬래시: Manager NFT 소각 및 차기 후보에게 신규 발행.
- - 필요 기능 : BFT Vote, NFT Burn and Mint 
+ - 필요 기능 : BFT Vote, NFT Burn and Mint
 
 ### NTT Token Transfer and swap, Airdrop (with Wormhole NTT)
  - 멀티체인 NTT 연동으로 ETH/SOL 등 네이티브 토큰 입금 지원.
@@ -121,12 +121,70 @@ Rough Guide
 ### User
 - zkLogin을 통한 월렛 생성 > 프로필 생성 > SUI 전송 > SUI<>SWT Swap > 메세지 작성/상호작용 등 수행 > 다수의 Like 받을 시 Under-Review 전환 > Review 결과에 따른 보상 제공 > NTT Token Random Airdrop 당첨
 ### Manager
-- (Manager NFT 보유자) > Mypage에서 Under-review 상태의 메세지들 검토 및 투표 > 투표 보상 제공 > (if) 커뮤니티 활동 중 악의적인 Manager의 행위 발견 시 Resolve 신청 및 투표 
+- (Manager NFT 보유자) > Mypage에서 Under-review 상태의 메세지들 검토 및 투표 > 투표 보상 제공 > (if) 커뮤니티 활동 중 악의적인 Manager의 행위 발견 시 Resolve 신청 및 투표
 ## Local Runs
-- 
+-
 ## Further Improvement Things
 - More Effective Tokenomics : SWT token burn 등 지속가능한 수준에서의 토큰 공급량을 감소 시킬 수 있는 요인 제시(SWT Holder 가치 향상)
 - Add Varius SWT<>items pair : SWT token의 활용도 향상을 위한 커뮤니티 내 아이템/기능 구매 서비스 제공
+
+## Deployed Contract Addresses (Testnet)
+
+### 📦 Package Information
+- **Package ID**: `0x9538cdee73c8650fac9e81afef59a1e8920411a306fce14b171d08be63455630`
+- **Network**: Sui Testnet
+- **Deployed Date**: 2025-09-21
+
+### 🏛️ Core Objects
+
+| Object | ID | Description |
+|--------|----|--------------|
+| **Treasury** | `0x0e61ad498504f958febfaf451e3356b9f0dd7a12aacc920bf7fd88e16ea51f42` | SWT 토큰 보관소 |
+| **Manager Registry** | `0x75bb478438d5ff37e6fe26ce3fb3e69922c2478b0c7a557781986cd4066d03b5` | 매니저 NFT 관리 |
+| **Message Board** | `0x6f6f65c290c02a9cac5492b479459a5444ab508f2904448fc4637fd2301f4924` | 메시지 보드 |
+| **Voting System** | `0x937637ed4c063afa47ed87719eaba94119f1d8b2dda8f4a9044247acc8eb519c` | 투표 시스템 |
+| **Reward System** | `0xcb373a0b659ee9a45fedf586e57ee580c55d2d66387208cb327a8e34b43955be` | 보상 시스템 |
+| **Lockup Vault** | `0x5d9bdb3af28df878c5c147359a6b3cf841741f491d8726f56821a31a8aed4690` | 토큰 락업 보관소 |
+| **User Interactions** | `0x89427ba0b7f9c8840dce8c3e1f556f78efba9d2b1e1376968c74701a7de2d7d9` | 사용자 상호작용 추적 |
+| **Slashing System** | `0x6c3abdd258d9273fc614c6786e97281cc57386db19fbee39d90b8e9b1607d7ec` | 슬래싱 시스템 |
+| **Manager Vote History** | `0x03ff39991f2ffde3eaebc1d9d99f1718ce57d30ca253c5c56e36e6b592d0ec13` | 매니저 투표 기록 |
+
+### 🔑 Admin Objects (Owner Required)
+
+| Object | ID | Description |
+|--------|----|--------------|
+| **AdminCap** | `0xd3b3d54dec4f0aac33392d491405eb427cb9321dc3e8deb4049f76be56a2940b` | 관리자 권한 |
+| **TreasuryCap** | `0x651797c3e8c9ce54c30c3b136fbe79e617c07d8e6e1d542f14de602ab0a203e4` | 토큰 발행 권한 |
+| **UpgradeCap** | `0x1e8d07e8b0c474b1505ff143877df26fc2a2ba89f3e2bcca0a1501abd726b1cd` | 컨트랙트 업그레이드 권한 |
+
+### 🪙 SWT Token Information
+- **Token Type**: `0x9538cdee73c8650fac9e81afef59a1e8920411a306fce14b171d08be63455630::token::TOKEN`
+- **CoinMetadata**: `0x45d3cdb7c5a5a2528780bdd6f09165c0f6d109b25a114cc11fbb2b2025722379`
+- **Symbol**: SWT
+- **Name**: SuiWorld Token
+- **Decimals**: 6
+- **Total Supply**: 100,000,000 SWT
+
+### 🚀 Usage Examples
+
+#### Environment Setup (.env file)
+```bash
+PACKAGE_ID=0x9538cdee73c8650fac9e81afef59a1e8920411a306fce14b171d08be63455630
+TREASURY_ID=0x0e61ad498504f958febfaf451e3356b9f0dd7a12aacc920bf7fd88e16ea51f42
+MANAGER_REGISTRY_ID=0x75bb478438d5ff37e6fe26ce3fb3e69922c2478b0c7a557781986cd4066d03b5
+MESSAGE_BOARD_ID=0x6f6f65c290c02a9cac5492b479459a5444ab508f2904448fc4637fd2301f4924
+VOTING_SYSTEM_ID=0x937637ed4c063afa47ed87719eaba94119f1d8b2dda8f4a9044247acc8eb519c
+ADMIN_CAP_ID=0xd3b3d54dec4f0aac33392d491405eb427cb9321dc3e8deb4049f76be56a2940b
+```
+
+#### Mint Manager NFT (Admin Only)
+```bash
+sui client call \
+  --package $PACKAGE_ID \
+  --module manager_nft \
+  --function mint_manager_nft \
+  --args $MANAGER_REGISTRY_ID $ADMIN_CAP_ID <recipient_address> "Manager Name" "Description"
+```
 
 ## Team & Roles
 ### Team Lead
