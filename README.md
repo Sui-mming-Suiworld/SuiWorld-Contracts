@@ -1,7 +1,5 @@
-# SuiWorld - powerful incentive model's SocialFi platform for High-Qualuty Intels
- 
-"수이월드 - 고퀄리티 인텔리들을 위한 강력한 인센티브 모델의 소셜파이 플랫폼"
-
+A SocialFi platform on the Sui blockchain.
+=======
 ## SSSS (Super Simple Summary for SuiWorld)
 
 - SuiWorld는 Sui 블록체인 위에서 고퀄리티 인텔의 생산·검증·보상을 선순환시키는 SocialFi 플랫폼입니다. zkLogin 기반의 쉬운 온보딩과 피드 중심 UX를 제공하고, SWT 토크노믹스로 글 작성·리뷰·투표 등 기여를 정량화 하여 보상/페널티를 자동화합니다. Manager NFT를 보유한 12명의 커뮤니티 매니저가 온체인 투표로 메세지를 하이프/스캠으로 분류해 품질을 관리하며, SUI<>SWT 스왑과 Wormhole NTT 연동으로 유동성과 에어드롭 리워드를 제공합니다. 프론트엔드(Next.js)–백엔드(FastAPI)–DB(PostgreSQL)–Move 모듈 아키텍처로 구성되어, Yaps 기반 InfoFi의 한계를 해결하고 지속 가능한 정보 생태계를 지향합니다.
