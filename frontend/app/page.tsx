@@ -58,6 +58,8 @@ export default function HomePage() {
               text={post.text}
               initialLikes={post.likes}
               initialComments={post.comments}
+              showOptionsMenu
+              showCornerMark
             />
           </div>
         ))}

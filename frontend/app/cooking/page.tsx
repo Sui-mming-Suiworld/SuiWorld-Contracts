@@ -20,6 +20,8 @@ export default function CookingPage() {
             avatarAlt="Hugh Mason profile image"
             initialLikes={57}
             initialComments={14}
+            showOptionsMenu
+            showCornerMark
           />
         </div>
       </div>
