@@ -1,7 +1,7 @@
 module suiworld::slashing {
     use sui::event;
     use sui::table::{Self, Table};
-    use suiworld::token::{Self, Treasury, SWT};
+    use suiworld::token::{Self, Treasury, TOKEN as SWT};
     use sui::coin::{Self, Coin};
 
     // Slashing tracking system

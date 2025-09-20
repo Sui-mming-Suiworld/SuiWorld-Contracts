@@ -3,6 +3,7 @@ module suiworld::manager_nft_tests {
     use sui::test_scenario::{Self as test, Scenario, next_tx, ctx};
     use std::string::{Self, String};
     use suiworld::manager_nft::{Self, ManagerNFT, ManagerRegistry};
+    use suiworld::token::{Self, AdminCap};
 
     const MANAGER1: address = @0xA1;
     const MANAGER2: address = @0xA2;
@@ -19,7 +20,14 @@ module suiworld::manager_nft_tests {
         next_tx(scenario, @0x0);
         {
             manager_nft::test_init(ctx(scenario));
+            token::test_init(ctx(scenario));
         };
+    }
+
+    fun create_admin_cap(scenario: &mut Scenario): AdminCap {
+        AdminCap {
+            id: object::new(ctx(scenario)),
+        }
     }
 
     fun create_test_name(i: u64): String {
@@ -70,13 +78,17 @@ module suiworld::manager_nft_tests {
         {
             let mut registry = test::take_shared<ManagerRegistry>(&mut scenario);
 
+            let admin = create_admin_cap(&mut scenario);
             manager_nft::mint_manager_nft(
                 &mut registry,
+                &admin,
                 MANAGER1,
                 string::utf8(b"Alice Manager"),
                 string::utf8(b"First platform manager"),
                 ctx(&mut scenario)
             );
+            let AdminCap { id } = admin;
+            object::delete(id);
 
             assert!(manager_nft::get_manager_count(&registry) == 1, 2);
             assert!(manager_nft::is_manager(&registry, MANAGER1), 1);
@@ -109,8 +121,10 @@ module suiworld::manager_nft_tests {
             let mut registry = test::take_shared<ManagerRegistry>(&mut scenario);
 
             // First mint succeeds
+            let admin = create_admin_cap(&mut scenario);
             manager_nft::mint_manager_nft(
                 &mut registry,
+                &admin,
                 MANAGER1,
                 string::utf8(b"Alice"),
                 string::utf8(b"Manager 1"),
@@ -118,14 +132,18 @@ module suiworld::manager_nft_tests {
             );
 
             // Second mint for same address should fail
+            let admin = create_admin_cap(&mut scenario);
             manager_nft::mint_manager_nft(
                 &mut registry,
+                &admin,
                 MANAGER1,
                 string::utf8(b"Alice Again"),
                 string::utf8(b"Duplicate"),
                 ctx(&mut scenario)
             );
 
+            let AdminCap { id } = admin;
+            object::delete(id);
             test::return_shared(registry);
         };
 
@@ -160,6 +178,7 @@ module suiworld::manager_nft_tests {
                     else @0x10B;
                 manager_nft::mint_manager_nft(
                     &mut registry,
+                    &admin,
                     addr,
                     create_test_name(i),
                     string::utf8(b"Test Manager"),
@@ -169,14 +188,18 @@ module suiworld::manager_nft_tests {
             };
 
             // This should fail
+            let admin = create_admin_cap(&mut scenario);
             manager_nft::mint_manager_nft(
                 &mut registry,
+                &admin,
                 @0x200,
                 string::utf8(b"Extra Manager"),
                 string::utf8(b"13th manager"),
                 ctx(&mut scenario)
             );
 
+            let AdminCap { id } = admin;
+            object::delete(id);
             test::return_shared(registry);
         };
 
@@ -195,8 +218,10 @@ module suiworld::manager_nft_tests {
         // Mint NFT
         {
             let mut registry = test::take_shared<ManagerRegistry>(&mut scenario);
+            let admin = create_admin_cap(&mut scenario);
             manager_nft::mint_manager_nft(
                 &mut registry,
+                &admin,
                 MANAGER1,
                 string::utf8(b"Alice"),
                 string::utf8(b"Manager"),
@@ -248,22 +273,28 @@ module suiworld::manager_nft_tests {
         {
             let mut registry = test::take_shared<ManagerRegistry>(&mut scenario);
 
+            let admin = create_admin_cap(&mut scenario);
             manager_nft::mint_manager_nft(
                 &mut registry,
+                &admin,
                 MANAGER1,
                 string::utf8(b"Alice"),
                 string::utf8(b"Manager 1"),
                 ctx(&mut scenario)
             );
 
+            let admin = create_admin_cap(&mut scenario);
             manager_nft::mint_manager_nft(
                 &mut registry,
+                &admin,
                 MANAGER2,
                 string::utf8(b"Bob"),
                 string::utf8(b"Manager 2"),
                 ctx(&mut scenario)
             );
 
+            let AdminCap { id } = admin;
+            object::delete(id);
             test::return_shared(registry);
         };
 
@@ -281,6 +312,8 @@ module suiworld::manager_nft_tests {
                 ctx(&mut scenario)
             );
 
+            let AdminCap { id } = admin;
+            object::delete(id);
             test::return_shared(registry);
         };
 
@@ -299,8 +332,10 @@ module suiworld::manager_nft_tests {
         // Mint NFT and accumulate misjudgements
         {
             let mut registry = test::take_shared<ManagerRegistry>(&mut scenario);
+            let admin = create_admin_cap(&mut scenario);
             manager_nft::mint_manager_nft(
                 &mut registry,
+                &admin,
                 MANAGER1,
                 string::utf8(b"Alice"),
                 string::utf8(b"Manager"),
@@ -358,8 +393,10 @@ module suiworld::manager_nft_tests {
         // Mint NFT with only 1 misjudgement
         {
             let mut registry = test::take_shared<ManagerRegistry>(&mut scenario);
+            let admin = create_admin_cap(&mut scenario);
             manager_nft::mint_manager_nft(
                 &mut registry,
+                &admin,
                 MANAGER1,
                 string::utf8(b"Alice"),
                 string::utf8(b"Manager"),
@@ -388,6 +425,8 @@ module suiworld::manager_nft_tests {
                 ctx(&mut scenario)
             );
 
+            let AdminCap { id } = admin;
+            object::delete(id);
             test::return_shared(registry);
         };
 
@@ -406,8 +445,10 @@ module suiworld::manager_nft_tests {
         // Mint NFT
         {
             let mut registry = test::take_shared<ManagerRegistry>(&mut scenario);
+            let admin = create_admin_cap(&mut scenario);
             manager_nft::mint_manager_nft(
                 &mut registry,
+                &admin,
                 MANAGER1,
                 string::utf8(b"Alice"),
                 string::utf8(b"Manager"),
@@ -451,8 +492,10 @@ module suiworld::manager_nft_tests {
             assert!(!manager_nft::is_manager(&registry, MANAGER2), 1);
 
             // Mint for MANAGER1
+            let admin = create_admin_cap(&mut scenario);
             manager_nft::mint_manager_nft(
                 &mut registry,
+                &admin,
                 MANAGER1,
                 string::utf8(b"Alice"),
                 string::utf8(b"Manager"),
@@ -482,8 +525,10 @@ module suiworld::manager_nft_tests {
         {
             let mut registry = test::take_shared<ManagerRegistry>(&mut scenario);
 
+            let admin = create_admin_cap(&mut scenario);
             manager_nft::mint_manager_nft(
                 &mut registry,
+                &admin,
                 MANAGER1,
                 string::utf8(b""), // Empty name
                 string::utf8(b""), // Empty description
@@ -507,8 +552,10 @@ module suiworld::manager_nft_tests {
         // Mint NFT
         {
             let mut registry = test::take_shared<ManagerRegistry>(&mut scenario);
+            let admin = create_admin_cap(&mut scenario);
             manager_nft::mint_manager_nft(
                 &mut registry,
+                &admin,
                 MANAGER1,
                 string::utf8(b"Alice"),
                 string::utf8(b"Manager"),
