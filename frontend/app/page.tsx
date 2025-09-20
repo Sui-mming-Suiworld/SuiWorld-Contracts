@@ -1,15 +1,21 @@
-import React from 'react';
-
-// TODO: Build the home page
-// - Tabs for Degen & Dev galleries
-// - Entry point for Swap UI
-// - User's staking status
+import { Chip } from "./components/Chip";
+import { FeedCard } from "./components/FeedCard";
 
 export default function HomePage() {
   return (
-    <div>
-      <h1>SuiWorld</h1>
-      <p>TODO: Gallery tabs, Swap, Staking Status</p>
+    <div className="space-y-4 pb-24">
+      <div className="flex gap-2 flex-wrap">
+        <Chip label="Developer" active />
+        <Chip label="Market" />
+        <Chip label="Decentralize" />
+        <Chip label="other" />
+      </div>
+
+      <div className="space-y-3">
+        <FeedCard name="서용원" text="다른 종류는 없으신가요?" />
+        <FeedCard name="오승준" text="네 이번엔 손절하고 마라만 집중하고 있습니다" />
+        <FeedCard name="서용원" text="와 근절심하셨군요 고생하십니다" />
+      </div>
     </div>
   );
 }
