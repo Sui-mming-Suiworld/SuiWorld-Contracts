@@ -81,3 +81,8 @@ temp/
 # Documentation build
 docs/_build/
 docs/.doctrees/
+
+
+# private
+3_verify_transaction.py
+tx_verify_89VGHw2n.json

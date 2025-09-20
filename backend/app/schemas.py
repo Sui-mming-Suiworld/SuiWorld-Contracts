@@ -2,7 +2,6 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
-
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -53,7 +52,7 @@ class AuthSession(BaseModel):
 class UserProfileRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: Optional[UUID] = Field(default=None, description="Profile identifier (UUID)")
+    id: UUID
     supabase_id: Optional[str] = Field(
         default=None, description="Supabase auth identifier for this user"
     )

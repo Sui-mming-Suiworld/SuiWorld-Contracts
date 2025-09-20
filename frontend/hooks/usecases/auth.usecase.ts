@@ -76,18 +76,42 @@ export const useAuth = () => {
       return { success: false, reason: "missing-session" };
     }
 
-    const response = await fetch(`${BACKEND_URL}/auth/supabase-login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ access_token: accessToken }),
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${BACKEND_URL}/auth/supabase-login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ access_token: accessToken }),
+      });
+    } catch (error) {
+      console.warn("Failed to reach backend for Supabase session exchange", error);
+      await supabase.auth.signOut();
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+      return { success: false, reason: "missing-session" };
+    }
 
-    const payload = (await response.json()) as SupabaseExchangePayload | { detail?: string };
+    let payload: unknown = null;
+    try {
+      payload = await response.json();
+    } catch (error) {
+      payload = null;
+    }
+
+    if (response.status === 401) {
+      await supabase.auth.signOut();
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+      return { success: false, reason: "missing-session" };
+    }
+
     if (!response.ok) {
+      const detail =
+        typeof payload === "object" && payload !== null && "detail" in payload
+          ? (payload as { detail?: string }).detail
+          : undefined;
       return {
         success: false,
         reason: "exchange-failed",
-        message: (payload as { detail?: string }).detail ?? "Unable to exchange Supabase session",
+        message: detail ?? "Unable to exchange Supabase session",
       };
     }
 

@@ -1,0 +1,471 @@
+1. token.move - SWT 토큰 관리
+
+  초기화
+
+  fun init(_witness: TOKEN, ctx: &mut TxContext)
+  - SWT 토큰 생성 (100M 총 발행량, 6 decimals)
+  - Treasury와 AdminCap 생성
+  - 모든 토큰을 Treasury에 보관
+  - 메타데이터 동결
+
+  토큰 전송
+
+  public fun transfer_from_treasury(
+      treasury: &mut Treasury,
+      _admin: &AdminCap,
+      amount: u64,
+      recipient: address,
+      ctx: &mut TxContext
+  )
+  - AdminCap 보유자(컨트랙트 배포자)만 Treasury에서 토큰 인출 가능
+  - 지정된 수량을 수신자에게 전송
+  - TokenMinted 이벤트 발생
+
+  public(package) fun transfer_from_treasury_internal(
+      treasury: &mut Treasury,
+      amount: u64,
+      recipient: address,
+      ctx: &mut TxContext
+  )
+  - 패키지 내부 모듈(rewards, vote)에서만 사용
+  - AdminCap 없이 Treasury에서 토큰 전송 (보상 지급용)
+
+  토큰 소각/반환
+
+  public fun burn_tokens(
+      treasury: &mut Treasury,
+      coin: Coin<SWT>,
+      ctx: &mut TxContext
+  )
+  - SWT 코인을 Treasury로 반환
+  - TokenBurned 이벤트 발생
+
+  public fun return_tokens_to_treasury(
+      treasury: &mut Treasury,
+      returned_balance: Balance<SWT>
+  )
+  - Balance 형태의 토큰을 Treasury로 반환
+  - 페널티나 슬래싱된 토큰 처리용
+  - 재분배 가능한 형태로 보관
+
+  유틸리티 함수
+
+  public fun check_minimum_balance(coin: &Coin<SWT>, minimum: u64): bool
+  - 코인이 최소 잔액 요구사항 충족하는지 확인
+
+  public fun get_treasury_balance(treasury: &Treasury): u64
+  - Treasury 현재 잔액 조회
+
+  public fun get_total_minted(treasury: &Treasury): u64
+  - 총 발행량 조회
+
+  2. manager_nft.move - 매니저 NFT 관리
+
+  초기화
+
+  fun init(ctx: &mut TxContext)
+  - ManagerRegistry 생성
+  - 최대 12명 매니저 제한
+  - NFT ID 추적 및 오판 카운트 테이블 초기화
+
+  NFT 발행 (관리자 전용)
+
+  public fun mint_manager_nft(
+      registry: &mut ManagerRegistry,
+      _admin: &AdminCap,
+      recipient: address,
+      name: String,
+      description: String,
+      ctx: &mut TxContext
+  )
+  - AdminCap 보유자만 NFT 발행 가능
+  - 최대 12명 제한, 중복 방지
+  - NFT ID 추적, 오판 카운트 초기화
+  - ManagerNFTMinted 이벤트 발생
+
+  NFT 거래
+
+  public fun transfer_manager_nft(
+      registry: &mut ManagerRegistry,
+      nft: ManagerNFT,
+      recipient: address,
+      ctx: &mut TxContext
+  )
+  - NFT를 다른 주소로 전송 (거래 가능)
+  - Registry 업데이트, 오판 카운트 이전
+  - ManagerNFTTransferred 이벤트 발생
+
+  투표 통계 관리
+
+  public fun increment_vote_count(nft: &mut ManagerNFT)
+  - 매니저의 투표 참여 횟수 증가
+
+  public fun increment_misjudgement_count(nft: &mut ManagerNFT)
+  - NFT 객체의 오판 횟수 증가 (레거시)
+
+  public fun increment_registry_misjudgement(
+      registry: &mut ManagerRegistry,
+      manager: address
+  ): u64
+  - Registry에서 오판 횟수 관리 (NFT 접근 불필요)
+  - 증가된 카운트 반환
+
+  NFT 슬래싱
+
+  public fun slash_manager_nft(
+      registry: &mut ManagerRegistry,
+      nft: ManagerNFT,
+      _ctx: &mut TxContext
+  )
+  - 오판 3회 이상 시 NFT 슬래싱
+  - NFT 객체 파괴, Registry에서 제거
+
+  public fun burn_manager_nft(
+      registry: &mut ManagerRegistry,
+      nft: ManagerNFT,
+      ctx: &mut TxContext
+  )
+  - NFT를 직접 소각
+  - 모든 추적 정보 제거
+
+  public fun slash_manager_for_misconduct(
+      registry: &mut ManagerRegistry,
+      manager: address,
+      ctx: &mut TxContext
+  )
+  - BFT 투표 후 부정행위 매니저 슬래싱
+  - NFT는 소유자가 보유하지만 권한 상실
+
+  조회 함수
+
+  public fun is_manager(registry: &ManagerRegistry, addr: address): bool
+  - 특정 주소가 매니저인지 확인
+
+  public fun get_manager_count(registry: &ManagerRegistry): u64
+  - 현재 매니저 수 조회
+
+  public fun get_all_managers(registry: &ManagerRegistry): vector<address>
+  - 모든 매니저 주소 목록 반환
+
+  public fun get_manager_stats(nft: &ManagerNFT): (u64, u64)
+  - NFT 통계 조회 (투표 수, 오판 수)
+
+  public fun get_registry_misjudgement_count(
+      registry: &ManagerRegistry,
+      manager: address
+  ): u64
+  - Registry에서 매니저 오판 횟수 조회
+
+  3. message.move - 메시지 시스템
+
+  상태 상수 함수
+
+  public fun status_normal(): u8 { 0 }
+  public fun status_under_review(): u8 { 1 }
+  public fun status_hyped(): u8 { 2 }
+  public fun status_spam(): u8 { 3 }
+  public fun status_deleted(): u8 { 4 }
+  - 메시지 상태 값 제공
+
+  초기화
+
+  fun init(ctx: &mut TxContext)
+  - MessageBoard, UserInteractions, LockupVault 생성
+
+  메시지 생성
+
+  public fun create_message(
+      board: &mut MessageBoard,
+      vault: &mut LockupVault,
+      mut swt_coin: Coin<SWT>,
+      title_hash: vector<u8>,
+      content_hash: vector<u8>,
+      tags: vector<String>,
+      ctx: &mut TxContext
+  )
+  - 1000 SWT를 1주일 락업 필요
+  - 기존 락업 있으면 기간만 연장 (최대 1주일)
+  - 메시지 내용은 해시로 저장
+  - MessageCreated 이벤트 발생
+
+  메시지 수정
+
+  public fun update_message(
+      message: &mut Message,
+      swt_coin: &Coin<SWT>,
+      manager_registry: &ManagerRegistry,
+      new_content_hash: vector<u8>,
+      new_tags: vector<String>,
+      ctx: &mut TxContext
+  )
+  - 1000 SWT 보유 또는 매니저만 수정 가능
+  - MessageUpdated 이벤트 발생
+
+  메시지 삭제
+
+  public fun delete_message(
+      message: &mut Message,
+      manager_registry: &ManagerRegistry,
+      ctx: &mut TxContext
+  )
+  - 매니저만 삭제 가능
+  - MessageDeleted 이벤트 발생
+
+  좋아요/신고
+
+  public fun like_message(
+      message: &mut Message,
+      interactions: &mut UserInteractions,
+      ctx: &mut TxContext
+  )
+  - 메시지에 좋아요 추가 (중복 방지)
+  - 20개 도달 시 자동으로 UNDER_REVIEW 상태
+  - MessageLiked 이벤트 발생
+
+  public fun alert_message(
+      message: &mut Message,
+      interactions: &mut UserInteractions,
+      ctx: &mut TxContext
+  )
+  - 메시지 신고 (중복 방지)
+  - 20개 도달 시 자동으로 UNDER_REVIEW 상태
+  - MessageAlerted 이벤트 발생
+
+  댓글
+
+  public fun create_comment(
+      board: &mut MessageBoard,
+      swt_coin: &Coin<SWT>,
+      message_id: ID,
+      content_hash: vector<u8>,
+      ctx: &mut TxContext
+  )
+  - 100 SWT 보유 필요
+  - CommentCreated 이벤트 발생
+
+  락업 관리
+
+  public fun unlock_tokens(
+      vault: &mut LockupVault,
+      ctx: &mut TxContext
+  )
+  - 1주일 후 락업된 토큰 회수
+  - 언락 후 새 메시지 작성하려면 다시 락업 필요
+
+  public fun slash_message(
+      message: &mut Message,
+      vault: &mut LockupVault,
+      registry: &ManagerRegistry,
+      treasury: &mut Treasury,
+      message_id: ID,
+      ctx: &mut TxContext
+  )
+  - 매니저가 스팸 메시지 슬래싱
+  - 500 SWT 페널티 (보유량 < 500이면 전액)
+  - 페널티는 Treasury로 반환 (재분배용)
+  - 남은 금액은 락업 유지
+
+  상태 관리
+
+  public fun update_message_status(message: &mut Message, new_status: u8)
+  - 메시지 상태 변경 (vote 모듈에서 호출)
+
+  조회 함수
+
+  public fun get_message_status(message: &Message): u8
+  public fun get_message_likes(message: &Message): u64
+  public fun get_message_alerts(message: &Message): u64
+  public fun get_message_author(message: &Message): address
+  public fun get_message_title_hash(message: &Message): vector<u8>
+  public fun get_message_content_hash(message: &Message): vector<u8>
+  public fun is_under_review(message: &Message): bool
+  public fun has_locked_tokens(vault: &LockupVault, user: address): bool
+  public fun get_total_locked(vault: &LockupVault): u64
+  public fun get_locked_balance(vault: &LockupVault, user: address): u64
+
+  4. vote.move - 투표 시스템
+
+  초기화
+
+  fun init(ctx: &mut TxContext)
+  - VotingSystem, ManagerVoteHistory 생성
+  - 쿼럼 4표 설정
+
+  제안 자동 생성
+
+  public fun create_proposal_auto(
+      voting_system: &mut VotingSystem,
+      message: &Message,
+      proposal_type: u8,
+      treasury: &mut Treasury,
+      ctx: &mut TxContext
+  ): ID
+  - 20 좋아요 → HYPE 제안 생성
+  - 20 신고 → SCAM 제안 생성
+  - 트리거한 사람에게 1 SWT 보상 (자동화 인센티브)
+  - ProposalCreated 이벤트 발생
+
+  매니저 투표
+
+  public fun cast_vote(
+      proposal: &mut Proposal,
+      manager_registry: &ManagerRegistry,
+      vote_history: &mut ManagerVoteHistory,
+      message: &mut Message,
+      treasury: &mut Treasury,
+      vote: bool,
+      ctx: &mut TxContext
+  )
+  - 매니저만 투표 가능
+  - 먼저 4표 도달한 쪽이 승리
+  - 자동으로 execute_proposal_internal 실행
+  - VoteCast, ProposalResolved 이벤트 발생
+
+  제안 실행 (내부)
+
+  fun execute_proposal_internal(
+      proposal: &mut Proposal,
+      message: &mut Message,
+      treasury: &mut Treasury,
+      ctx: &mut TxContext
+  )
+  - HYPE 통과:
+    - 작성자 +100 SWT
+    - 투표 매니저 각 +10 SWT
+    - 메시지 상태 → HYPED
+  - SCAM 통과:
+    - 투표 매니저 각 +10 SWT
+    - 메시지 상태 → SPAM
+
+  제안 실행 (공개)
+
+  public fun execute_proposal(
+      proposal: &mut Proposal,
+      message: &mut Message,
+      treasury: &mut Treasury,
+      ctx: &mut TxContext
+  )
+  - execute_proposal_internal 래퍼 (호환성용)
+
+  BFT 합의 검증
+
+  public fun check_manager_consensus(
+      vote_history: &mut ManagerVoteHistory,
+      manager_registry: &mut ManagerRegistry,
+      proposal: &Proposal,
+      manager_address: address
+  )
+  - 매니저가 다수 의견과 반대로 투표했는지 확인
+  - Registry에서 오판 카운트 관리
+  - ManagerMisjudgementDetected 이벤트 발생
+
+  매니저 해임 (BFT)
+
+  public fun create_manager_resolution(
+      manager_registry: &ManagerRegistry,
+      target_manager: address,
+      reason: vector<u8>,
+      ctx: &mut TxContext
+  ): ID
+  - 매니저가 다른 매니저 해임 제안
+  - 자신은 제안 불가
+
+  public fun vote_manager_resolution(
+      resolution: &mut ManagerResolutionProposal,
+      manager_registry: &ManagerRegistry,
+      vote: bool,
+      ctx: &mut TxContext
+  )
+  - 8/12 찬성 필요 (BFT 2/3)
+  - 5표 이상 반대 시 자동 기각
+
+  public fun execute_manager_resolution(
+      resolution: &ManagerResolutionProposal,
+      manager_registry: &mut ManagerRegistry,
+      ctx: &mut TxContext
+  )
+  - 통과된 해임 제안 실행
+  - 대상 매니저 슬래싱
+
+  오판 추적
+
+  public fun update_misjudgement_count(
+      vote_history: &mut ManagerVoteHistory,
+      manager: address,
+      proposal_id: ID,
+      was_correct: bool
+  )
+  - 매니저 오판 횟수 업데이트
+  - 3회 이상 시 이벤트 발생
+
+  조회 함수
+
+  public fun get_proposal_status(proposal: &Proposal): u8
+  public fun get_proposal_votes(proposal: &Proposal): (u64, u64)
+  public fun get_proposal_type(proposal: &Proposal): u8
+
+  5. rewards.move - 보상 시스템
+
+  초기화
+
+  fun init(ctx: &mut TxContext)
+  - RewardSystem 생성
+  - 사용자별 보상 추적 테이블 초기화
+
+  HYPE 보상 분배
+
+  public(package) fun distribute_hype_reward(
+      reward_system: &mut RewardSystem,
+      treasury: &mut Treasury,
+      recipient: address,
+      amount: u64,
+      ctx: &mut TxContext
+  )
+  - vote 모듈에서만 호출 가능 (package visibility)
+  - HYPE 메시지 작성자 보상 지급
+  - 사용자 보상 통계 업데이트
+  - RewardDistributed 이벤트 발생
+
+  매니저 보상 분배
+
+  public(package) fun distribute_manager_reward(
+      reward_system: &mut RewardSystem,
+      treasury: &mut Treasury,
+      recipient: address,
+      amount: u64,
+      ctx: &mut TxContext
+  )
+  - vote 모듈에서만 호출 가능
+  - 투표 참여 매니저 보상 지급
+  - 사용자 보상 통계 업데이트
+
+  조회 함수
+
+  public fun get_user_reward_info(
+      reward_system: &RewardSystem,
+      user: address
+  ): (u64, u64, u64)
+  - 반환: (총 획득량, HYPE 메시지 수, 매니저 보상)
+
+  public fun get_total_rewards_distributed(reward_system: &RewardSystem): u64
+  - 전체 분배된 보상 총량
+
+  주요 플로우 요약
+
+  콘텐츠 생성 → 보상
+
+  1. 메시지 작성: 1000 SWT 락업 (1주일)
+  2. 커뮤니티 반응: 좋아요/신고
+  3. 자동 제안: 20개 도달 시 → UNDER_REVIEW
+  4. 제안 트리거: 누구나 create_proposal_auto 호출 (+1 SWT 보상)
+  5. 매니저 투표: 먼저 4표 도달 시 자동 실행
+  6. 보상 분배:
+    - HYPE: 작성자 +100 SWT, 매니저 각 +10 SWT
+    - SCAM: 매니저 각 +10 SWT, 작성자 -500 SWT (페널티)
+
+  거버넌스
+
+  - 12명 매니저: AdminCap 보유자가 임명
+  - BFT 투표: 8/12 찬성으로 매니저 해임
+  - 오판 추적: Registry에서 관리, 3회 초과 시 슬래싱 가능
+  - NFT 거래: 매니저 NFT는 거래 가능 (권한 이전)
