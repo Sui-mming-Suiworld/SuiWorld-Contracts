@@ -1,8 +1,8 @@
 // frontend/components/TabBar.tsx
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function TabBar() {
   const pathname = usePathname();
@@ -11,9 +11,15 @@ export function TabBar() {
     return (
       <Link
         href={href}
-        className={`flex flex-col items-center justify-center flex-1 py-3 text-xs ${active ? "text-brand-blue" : "text-white/70"}`}
+        className={`flex flex-1 flex-col items-center justify-center py-3 text-xs font-medium transition ${
+          active ? "text-brand-blue" : "text-slate-500 hover:text-slate-700"
+        }`}
       >
-        <div className={`h-6 w-6 rounded-2xl ${active ? "bg-white text-black" : "bg-white/10"} grid place-items-center mb-1`}>
+        <div
+          className={`mb-1 grid h-6 w-6 place-items-center rounded-2xl ${
+            active ? "bg-brand-blue text-white" : "bg-slate-100 text-slate-500"
+          }`}
+        >
           <span>{icon}</span>
         </div>
         {label}
@@ -22,11 +28,11 @@ export function TabBar() {
   };
 
   return (
-    <div className="m-4 bg-white/10 backdrop-blur rounded-2xl px-3 flex shadow-lg">
-      <Item href="/" label="Home" icon="🏠" />
-      <Item href="/cooking" label="Cooking" icon="🍳" />
-      <Item href="/wallet" label="Wallet" icon="👛" />
-      <Item href="/mypage" label="My Page" icon="👤" />
+    <div className="mx-4 flex rounded-2xl border border-slate-200 bg-white px-3 shadow-sm">
+      <Item href="/" label="Home" icon="H" />
+      <Item href="/cooking" label="Cooking" icon="C" />
+      <Item href="/wallet" label="Wallet" icon="W" />
+      <Item href="/mypage" label="My Page" icon="P" />
     </div>
   );
 }

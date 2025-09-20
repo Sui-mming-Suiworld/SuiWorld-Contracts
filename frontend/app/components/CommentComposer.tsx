@@ -5,26 +5,26 @@ export function CommentComposer({ className = "" }: { className?: string }) {
   const [text, setText] = useState("");
 
   const send = () => {
-    const v = text.trim();
-    if (!v) return;
-    // TODO: 나중에 API 연결
-    console.log("comment:", v);
+    const value = text.trim();
+    if (!value) return;
+    console.log("comment:", value);
     setText("");
   };
 
   return (
     <div className={`mx-auto max-w-[420px] px-4 ${className}`}>
-      <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl p-2 backdrop-blur">
+      <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
         <input
           value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="댓글을 입력하세요"
-          className="flex-1 h-10 px-3 rounded-xl bg-transparent outline-none text-white placeholder:text-white/40"
+          onChange={(event) => setText(event.target.value)}
+          placeholder="댓글을 입력해주세요"
+          className="h-10 flex-1 rounded-xl bg-slate-100 px-3 text-sm text-slate-700 outline-none placeholder:text-slate-400"
         />
         <button
           onClick={send}
-          className="h-10 px-4 rounded-xl bg-white text-black font-medium disabled:opacity-50"
+          className="h-10 rounded-xl bg-brand-blue px-4 text-sm font-medium text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={!text.trim()}
+          type="button"
         >
           등록
         </button>
@@ -32,3 +32,4 @@ export function CommentComposer({ className = "" }: { className?: string }) {
     </div>
   );
 }
+
