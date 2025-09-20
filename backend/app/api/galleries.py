@@ -1,13 +1,19 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
 
 router = APIRouter()
 
+
 @router.get("/")
 def get_galleries():
-    # TODO: Return list of predefined galleries (Degen, Dev)
-    return []
+    raise HTTPException(
+        status_code=status.HTTP_410_GONE,
+        detail="Galleries have been retired. Use the home feed instead.",
+    )
+
 
 @router.get("/{slug}")
 def get_gallery_details(slug: str):
-    # TODO: Return details for a specific gallery
-    return {"slug": slug}
+    raise HTTPException(
+        status_code=status.HTTP_410_GONE,
+        detail="Gallery detail pages are no longer available.",
+    )
