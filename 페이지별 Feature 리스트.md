@@ -1,5 +1,7 @@
 페이지별 Feature 리스트 (갤러리 제거판)
 
+check 표시 된거는 figma 디자인 상에서 컴포넌트가 존재한다.
+
 1) Home (피드 + 태그/검색)
 
 - 홈 버튼: 루트 이동 **Check**
@@ -8,7 +10,9 @@
 
 - 태그 필터: 다중 선택 가능(OR/AND 추후 옵션) **Check**
 
-무한 스크롤 피드: 최신/핫 정렬(좋아요·알럿 가중치 반영) **정렬 버튼 필요**
+무한 스크롤 피드: 최신기준
+
+우측 하단 글 생성 버튼: 예치금 확인 후 message/create page로 이동
 
 포스트 카드: 본문 프리뷰, 태그 칩, 좋아요/알럿 수, 상태 뱃지(NORMAL/HYPED/UNDER_REVIEW) **like, alert 숫자 위치, 뱃지 구현 필요**
 
@@ -70,8 +74,13 @@ SCAM: 창작자 -200 SWT, 매니저 +10 SWT **checked**
 
 Misjudgement(후속): 전원 투표 후 BFT 모델로 오판 검사 → 잦은 오판 시 매니저 NFT 슬래시·교체(표시). **checked**
 
-5) Swap (/swap)
+5) cooking(핫게시판)
+hyped된 게시글 (좋아요·알럿 가중치 반영) 최신순 기제. 
+홈 화면과 같이 무한 스크롤 기반
 
+6) wallet page
+sol, eth, sui, swt 토큰 보유량 확인
+하단에 Swap (/swap) 기능
 SUI↔SWT 고정가 스왑(최소): 견적, 사용자 서명, swaps/tx_logs 기록 **checked**
 
 잔액 표시: SUI/SWT **checked**
@@ -85,6 +94,14 @@ SWT 발행/풀 설정: 팀 트레저리 30%, 풀 70% 초기화(데브넷 스크�
 내 글/댓글/좋아요한 글 목록 **checked**
 
 내 제안/투표 내역(매니저인 경우) **checked**
+
+매니저에 의해처리해야될 status가 UNDER_REVIEW인 message들 확인할 수 있는 페이지로 리다이랙트 되는 버튼(report check list)(매니저인 경우)
+
+
+7) under_review_list page
+ - alert가 20개 이상 쌓여서 spam을 판단하는 proposal에 대한 message들은 빨간색 테두리 message. like가 20개 이상 쌓여서 hype를 판단하는 proposal 대한 message들은 파란색 테두리 message로, 무한스크롤로 나타난다.
+ 각 message들마다 agree는 위를 가리키는 엄지척 버튼, reject는 아래를 가리키는 엄지 버튼을 가진다. 이 버튼으로 vote를 수집해 
+
 
 내 보상/슬래싱 기록: payouts/tx_logs 타임라인 **checked, randomly airdrop (for cooking messages)도 표현 필요**
 

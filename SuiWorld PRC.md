@@ -20,7 +20,7 @@ SWT token Mint (100,000,000 SWT - 30% Treasury, 70% Pool)
 Sui <> SWT Swap Pool
 
 ### Home
-- Messanger가 보이는 메인 화면
+- Message가 보이는 메인 화면
 - Manager Candidate List 구성 (List : Sui Validator, Influencer, friendly Research Firm etc). in initial : list[0:12]에게 제공. 이 NFT는 trade 가능 (not Soulbound).이로 인한 부작용은 Manager misjudgment check func을 통해 해결.
 
 - message CRUD 기능
