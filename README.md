@@ -131,7 +131,7 @@ Rough Guide
 ## Deployed Contract Addresses (Testnet)
 
 ### 📦 Package Information
-- **Package ID**: `0x9538cdee73c8650fac9e81afef59a1e8920411a306fce14b171d08be63455630`
+- **Package ID**: `0x29d47a2ee20e275c8d781f733f327b06b28732ad8a8a96de586fd906a708f45b`
 - **Network**: Sui Testnet
 - **Deployed Date**: 2025-09-21
 
@@ -139,42 +139,64 @@ Rough Guide
 
 | Object | ID | Description |
 |--------|----|--------------|
-| **Treasury** | `0x0e61ad498504f958febfaf451e3356b9f0dd7a12aacc920bf7fd88e16ea51f42` | SWT 토큰 보관소 |
-| **Manager Registry** | `0x75bb478438d5ff37e6fe26ce3fb3e69922c2478b0c7a557781986cd4066d03b5` | 매니저 NFT 관리 |
-| **Message Board** | `0x6f6f65c290c02a9cac5492b479459a5444ab508f2904448fc4637fd2301f4924` | 메시지 보드 |
-| **Voting System** | `0x937637ed4c063afa47ed87719eaba94119f1d8b2dda8f4a9044247acc8eb519c` | 투표 시스템 |
-| **Reward System** | `0xcb373a0b659ee9a45fedf586e57ee580c55d2d66387208cb327a8e34b43955be` | 보상 시스템 |
-| **Lockup Vault** | `0x5d9bdb3af28df878c5c147359a6b3cf841741f491d8726f56821a31a8aed4690` | 토큰 락업 보관소 |
-| **User Interactions** | `0x89427ba0b7f9c8840dce8c3e1f556f78efba9d2b1e1376968c74701a7de2d7d9` | 사용자 상호작용 추적 |
-| **Slashing System** | `0x6c3abdd258d9273fc614c6786e97281cc57386db19fbee39d90b8e9b1607d7ec` | 슬래싱 시스템 |
-| **Manager Vote History** | `0x03ff39991f2ffde3eaebc1d9d99f1718ce57d30ca253c5c56e36e6b592d0ec13` | 매니저 투표 기록 |
+| **Treasury** | `0x0aaca0d916b6a6f1c6e74281147730d3b51839a09fee18498312a58bdc38ca71` | SWT 토큰 보관소 |
+| **Manager Registry** | `0x54c56d157a0410f9ee20e2ce17725b07136f3a943fcf9b5c7d045cb606fa0a53` | 매니저 NFT 관리 |
+| **Message Board** | `0x9aa8bb67059807836b115201456409b9970e86e5eaa5ab524a0740c302fcf659` | 메시지 보드 |
+| **Voting System** | `0xdd8524422133ff2ef32b370a18f906f19b77d340dc7b305f4cf5f5d1d8b5c0f3` | 투표 시스템 |
+| **Reward System** | `0x3188e16ae612bbc93c498bf4e4ff7905c706d39ee373e4f9ba9dc99309e6a923` | 보상 시스템 |
+| **Lockup Vault** | `0xc5b634d44cc1ae3f377441f6a62d06a48b2386e7d5a8a04617a4512d25013bdf` | 토큰 락업 보관소 |
+| **User Interactions** | `0x4df15e7c423099a875c6e0d5a1e71a588fbc1b803488007e30ab1b7b3ff7d25d` | 사용자 상호작용 추적 |
+| **Slashing System** | `0x30503d50aee7fb72d9963836b69c784e964384486c9cab8971c9564484cc0102` | 슬래싱 시스템 |
+| **Manager Vote History** | `0x7a0ab788017e68c2973ba97b34c3d90b69a222ba27ca316661592a621ff38281` | 매니저 투표 기록 |
 
 ### 🔑 Admin Objects (Owner Required)
 
 | Object | ID | Description |
 |--------|----|--------------|
-| **AdminCap** | `0xd3b3d54dec4f0aac33392d491405eb427cb9321dc3e8deb4049f76be56a2940b` | 관리자 권한 |
-| **TreasuryCap** | `0x651797c3e8c9ce54c30c3b136fbe79e617c07d8e6e1d542f14de602ab0a203e4` | 토큰 발행 권한 |
-| **UpgradeCap** | `0x1e8d07e8b0c474b1505ff143877df26fc2a2ba89f3e2bcca0a1501abd726b1cd` | 컨트랙트 업그레이드 권한 |
+| **AdminCap** | `0x48c6b1fc7e0237939abda75baa8eca93825c22b7412604640eb7387093559cf9` | 관리자 권한 |
+| **TreasuryCap** | `0x46f5ce3f299a49600d675ab006fbdaf86ca539eb3f88c6d1a0af318a45adf010` | 토큰 발행 권한 |
+| **NTTManagerCap** | `0xed9f6e897bfd84c904d61a7880c1d7be3b6c5b16ec3d6ba1f30a866af79bf670` | NTT Manager 권한 |
+| **UpgradeCap** | `0x265cea24e44a9160f6a0a702fa8619195cb7323eb7528c4633aa8e7c68b75220` | 컨트랙트 업그레이드 권한 |
 
 ### 🪙 SWT Token Information
-- **Token Type**: `0x9538cdee73c8650fac9e81afef59a1e8920411a306fce14b171d08be63455630::token::TOKEN`
-- **CoinMetadata**: `0x45d3cdb7c5a5a2528780bdd6f09165c0f6d109b25a114cc11fbb2b2025722379`
+- **Token Type**: `0x29d47a2ee20e275c8d781f733f327b06b28732ad8a8a96de586fd906a708f45b::token::TOKEN`
+- **CoinMetadata**: `0x89b1e8858873e59b424d254fdec8459e03ad102622dbc7673e2b2ad8f9716fa9`
 - **Symbol**: SWT
 - **Name**: SuiWorld Token
 - **Decimals**: 6
 - **Total Supply**: 100,000,000 SWT
 
+## Cross-Chain Deployment (Wormhole NTT)
+
+### 🌊 Sui Testnet (NTT Enabled)
+- **NTT Manager**: `0x129a38e264509952e456b9913d215903f75f4527b49bf55d84608917f25e620e`
+- **Wormhole Transceiver**: `0x3ff118479261d70c120a67723567b057903ddff7938e3ddf5f7e8467fc84a0be`
+- **Token**: `0x29d47a2ee20e275c8d781f733f327b06b28732ad8a8a96de586fd906a708f45b::token::TOKEN`
+
+### ⟠ Ethereum Sepolia (NTT Enabled)
+- **Token Contract**: `0x933E68b0C7BECd6A101b24a5b03c3b6491763590`
+- **NTT Manager**: `0x6353E7054e62e50b14B87C10444BF61dc1fB7746`
+- **Wormhole Transceiver**: `0xC0821009c0395f4168dBBa7e4F86d1720DC46dd0`
+- **Explorer**: [View on Sepolia Etherscan](https://sepolia.etherscan.io/address/0x933E68b0C7BECd6A101b24a5b03c3b6491763590)
+
+### ◎ Solana Devnet (NTT Enabled)
+- **Token Mint**: `9YodgJf2soQgm67i9YkCCM8AgqtKyAK84p42mVUTeVAx`
+- **NTT Program**: `NtTfVSVxftmqxZE6nDJrWe1PEsBM5q6oyGAbeiRANUb`
+- **Wormhole Transceiver**: `3nfPoG8karvrXfZ1cq1ZXn1aLodSYqnGQP3u6h5M8YPq`
+- **Explorer**: [View on Solana Explorer](https://explorer.solana.com/address/NtTfVSVxftmqxZE6nDJrWe1PEsBM5q6oyGAbeiRANUb?cluster=devnet)
+
 ### 🚀 Usage Examples
 
 #### Environment Setup (.env file)
 ```bash
-PACKAGE_ID=0x9538cdee73c8650fac9e81afef59a1e8920411a306fce14b171d08be63455630
-TREASURY_ID=0x0e61ad498504f958febfaf451e3356b9f0dd7a12aacc920bf7fd88e16ea51f42
-MANAGER_REGISTRY_ID=0x75bb478438d5ff37e6fe26ce3fb3e69922c2478b0c7a557781986cd4066d03b5
-MESSAGE_BOARD_ID=0x6f6f65c290c02a9cac5492b479459a5444ab508f2904448fc4637fd2301f4924
-VOTING_SYSTEM_ID=0x937637ed4c063afa47ed87719eaba94119f1d8b2dda8f4a9044247acc8eb519c
-ADMIN_CAP_ID=0xd3b3d54dec4f0aac33392d491405eb427cb9321dc3e8deb4049f76be56a2940b
+PACKAGE_ID=0x29d47a2ee20e275c8d781f733f327b06b28732ad8a8a96de586fd906a708f45b
+TREASURY_ID=0x0aaca0d916b6a6f1c6e74281147730d3b51839a09fee18498312a58bdc38ca71
+MANAGER_REGISTRY_ID=0x54c56d157a0410f9ee20e2ce17725b07136f3a943fcf9b5c7d045cb606fa0a53
+MESSAGE_BOARD_ID=0x9aa8bb67059807836b115201456409b9970e86e5eaa5ab524a0740c302fcf659
+VOTING_SYSTEM_ID=0xdd8524422133ff2ef32b370a18f906f19b77d340dc7b305f4cf5f5d1d8b5c0f3
+ADMIN_CAP_ID=0x48c6b1fc7e0237939abda75baa8eca93825c22b7412604640eb7387093559cf9
+TREASURY_CAP_ID=0x46f5ce3f299a49600d675ab006fbdaf86ca539eb3f88c6d1a0af318a45adf010
+NTT_MANAGER_CAP_ID=0xed9f6e897bfd84c904d61a7880c1d7be3b6c5b16ec3d6ba1f30a866af79bf670
 ```
 
 #### Mint Manager NFT (Admin Only)
