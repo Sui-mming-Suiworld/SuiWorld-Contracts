@@ -1,10 +1,9 @@
-cat > .gitignore << 'EOF'
 # OS
 .DS_Store
 
 # env
 *.env
-*.env.* 
+*.env.*
 .env.local
 
 # build
