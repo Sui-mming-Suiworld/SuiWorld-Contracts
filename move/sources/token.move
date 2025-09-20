@@ -3,16 +3,23 @@ module suiworld::token {
     use sui::balance::{Self, Balance};
     use sui::event;
 
-    // One-time witness for token initialization
+
+    // One-time witness for token initialization and coin type
     public struct TOKEN has drop {}
 
-    // SWT Token Type
-    public struct SWT has drop {}
+    // Type alias for better code readability
+    // Other modules will import TOKEN as SWT
+    // Example: use suiworld::token::{TOKEN as SWT};
+
+    // Admin capability for treasury management
+    public struct AdminCap has key, store {
+        id: UID,
+    }
 
     // Treasury for managing minted tokens
     public struct Treasury has key {
         id: UID,
-        balance: Balance<SWT>,
+        balance: Balance<TOKEN>,
         total_minted: u64,
     }
 
@@ -36,10 +43,10 @@ module suiworld::token {
     const EInsufficientBalance: u64 = 1;
 
     // Initialize the SWT token
-    fun init(_witness: TOKEN, ctx: &mut TxContext) {
-        let swt_witness = SWT {};
+    fun init(witness: TOKEN, ctx: &mut TxContext) {
+        // Use the TOKEN witness directly
         let (mut treasury_cap, metadata) = coin::create_currency(
-            swt_witness,
+            witness,
             DECIMALS,
             b"SWT",
             b"SuiWorld Token",
@@ -60,45 +67,46 @@ module suiworld::token {
             total_minted: TOTAL_SUPPLY,
         };
 
+        // Create admin capability for deployer
+        let admin_cap = AdminCap {
+            id: object::new(ctx),
+        };
+
         // Share treasury
         transfer::share_object(treasury);
 
         // Freeze metadata
         transfer::public_freeze_object(metadata);
 
-        // Transfer treasury cap to deployer
+        // Transfer treasury cap and admin cap to deployer
         transfer::public_transfer(treasury_cap, tx_context::sender(ctx));
+        transfer::public_transfer(admin_cap, tx_context::sender(ctx));
     }
 
-    #[test_only]
-    public fun test_init(ctx: &mut TxContext) {
-        // Simplified test init without currency creation
-        // Just create empty treasury for testing
-        use sui::balance;
 
-        // Create treasury with empty balance for testing
-        let treasury = Treasury {
-            id: object::new(ctx),
-            balance: balance::zero<SWT>(),
-            total_minted: 0,
-        };
-
-        transfer::share_object(treasury);
-    }
-
-    #[test_only]
-    public fun test_mint_and_add_to_treasury(treasury: &mut Treasury, amount: u64, _ctx: &mut TxContext) {
-        use sui::balance;
-        use sui::test_utils;
-
-        // Simply create test balance and add to treasury
-        let test_balance = balance::create_for_testing<SWT>(amount);
-        balance::join(&mut treasury.balance, test_balance);
-        treasury.total_minted = treasury.total_minted + amount;
-    }
-
-    // Transfer SWT from treasury (for rewards)
+    // Transfer SWT from treasury (admin only)
     public fun transfer_from_treasury(
+        treasury: &mut Treasury,
+        _admin: &AdminCap,  // Only admin can call this
+        amount: u64,
+        recipient: address,
+        ctx: &mut TxContext
+    ) {
+        assert!(balance::value(&treasury.balance) >= amount, EInsufficientBalance);
+
+        let reward_balance = balance::split(&mut treasury.balance, amount);
+        let reward_coin = coin::from_balance(reward_balance, ctx);
+
+        transfer::public_transfer(reward_coin, recipient);
+
+        event::emit(TokenMinted {
+            amount,
+            recipient,
+        });
+    }
+
+    // Internal transfer for rewards module (package function)
+    public(package) fun transfer_from_treasury_internal(
         treasury: &mut Treasury,
         amount: u64,
         recipient: address,
@@ -120,7 +128,7 @@ module suiworld::token {
     // Burn tokens (for slashing)
     public fun burn_tokens(
         treasury: &mut Treasury,
-        coin: Coin<SWT>,
+        coin: Coin<TOKEN>,
         ctx: &mut TxContext
     ) {
         let amount = coin::value(&coin);
@@ -136,8 +144,24 @@ module suiworld::token {
         });
     }
 
+    // Return tokens to treasury (used for penalties and slashing)
+    public fun return_tokens_to_treasury(
+        treasury: &mut Treasury,
+        returned_balance: Balance<TOKEN>
+    ) {
+        let amount = balance::value(&returned_balance);
+
+        // Add tokens back to treasury for redistribution
+        balance::join(&mut treasury.balance, returned_balance);
+
+        event::emit(TokenBurned {
+            amount,
+            from: @0x0, // System return to treasury
+        });
+    }
+
     // Check if user has minimum balance for actions
-    public fun check_minimum_balance(coin: &Coin<SWT>, minimum: u64): bool {
+    public fun check_minimum_balance(coin: &Coin<TOKEN>, minimum: u64): bool {
         coin::value(coin) >= minimum
     }
 

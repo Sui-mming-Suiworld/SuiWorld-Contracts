@@ -46,6 +46,7 @@ module suiworld::vote {
     public struct ManagerVoteHistory has key {
         id: UID,
         manager_votes: Table<address, vector<VoteHistoryEntry>>,
+        misjudgement_counts: Table<address, u64>,
     }
 
     public struct VoteHistoryEntry has store, copy, drop {
@@ -53,6 +54,20 @@ module suiworld::vote {
         vote: bool,
         consensus_result: bool,
         timestamp: u64,
+    }
+
+    // Manager Resolution Proposal for removing malicious managers
+    public struct ManagerResolutionProposal has key, store {
+        id: UID,
+        target_manager: address,
+        reason: vector<u8>,
+        proposer: address,
+        approve_votes: u64,
+        reject_votes: u64,
+        voters: vector<address>,
+        status: u8,
+        created_at: u64,
+        resolved_at: u64,
     }
 
     // Events
@@ -109,31 +124,42 @@ module suiworld::vote {
         let manager_vote_history = ManagerVoteHistory {
             id: object::new(ctx),
             manager_votes: table::new(ctx),
+            misjudgement_counts: table::new(ctx),
         };
 
         transfer::share_object(voting_system);
         transfer::share_object(manager_vote_history);
     }
 
-    #[test_only]
-    public fun test_init(ctx: &mut TxContext) {
-        init(ctx);
-    }
-
     // Create a proposal (automatically when message reaches threshold)
-    public fun create_proposal(
+    // Called when a message reaches 20 likes (HYPE) or 20 alerts (SCAM)
+    // Anyone can call this for messages in UNDER_REVIEW status
+    // Caller gets 1 SWT reward for triggering proposal creation
+    public fun create_proposal_auto(
         voting_system: &mut VotingSystem,
         message: &Message,
         proposal_type: u8,
+        treasury: &mut Treasury,
         ctx: &mut TxContext
     ): ID {
         assert!(proposal_type <= PROPOSAL_TYPE_SCAM, EInvalidProposalType);
 
-        // Only allow proposals for messages under review
+        // Check message status and thresholds
+        let should_create = if (proposal_type == PROPOSAL_TYPE_HYPE) {
+            message::get_message_likes(message) >= 20
+        } else {
+            message::get_message_alerts(message) >= 20
+        };
+
+        assert!(should_create, EMessageNotUnderReview);
         assert!(message::is_under_review(message), EMessageNotUnderReview);
 
+        // Reward the caller for triggering proposal creation (1 SWT incentive)
+        let trigger_reward = 1_000_000; // 1 SWT
+        token::transfer_from_treasury_internal(treasury, trigger_reward, tx_context::sender(ctx), ctx);
+
         let message_id = object::id(message);
-        let proposer = tx_context::sender(ctx);
+        let proposer = tx_context::sender(ctx); // System or triggering user
         let created_at = tx_context::epoch(ctx);
 
         let proposal = Proposal {
@@ -170,11 +196,13 @@ module suiworld::vote {
         proposal_id
     }
 
-    // Cast a vote (Manager only)
+    // Cast a vote (Manager only) - auto-executes if proposal passes
     public fun cast_vote(
         proposal: &mut Proposal,
         manager_registry: &ManagerRegistry,
         vote_history: &mut ManagerVoteHistory,
+        message: &mut Message,
+        treasury: &mut Treasury,
         vote: bool,
         ctx: &mut TxContext
     ) {
@@ -229,34 +257,36 @@ module suiworld::vote {
             vote,
         });
 
-        // Check if proposal can be resolved
-        if (proposal.approve_votes >= QUORUM || proposal.reject_votes >= QUORUM) {
-            resolve_proposal(proposal, ctx);
+        // Check if proposal can be resolved (first to reach 4 votes wins)
+        if (proposal.approve_votes >= QUORUM) {
+            proposal.status = STATUS_PASSED;
+            proposal.resolved_at = tx_context::epoch(ctx);
+
+            event::emit(ProposalResolved {
+                proposal_id: object::id(proposal),
+                status: proposal.status,
+                approve_votes: proposal.approve_votes,
+                reject_votes: proposal.reject_votes,
+            });
+
+            // Auto-execute the proposal
+            execute_proposal_internal(proposal, message, treasury, ctx);
+        } else if (proposal.reject_votes >= QUORUM) {
+            proposal.status = STATUS_REJECTED;
+            proposal.resolved_at = tx_context::epoch(ctx);
+
+            event::emit(ProposalResolved {
+                proposal_id: object::id(proposal),
+                status: proposal.status,
+                approve_votes: proposal.approve_votes,
+                reject_votes: proposal.reject_votes,
+            });
         }
     }
 
-    // Resolve proposal
-    fun resolve_proposal(proposal: &mut Proposal, ctx: &TxContext) {
-        if (proposal.approve_votes >= QUORUM) {
-            proposal.status = STATUS_PASSED;
-        } else if (proposal.reject_votes >= QUORUM) {
-            proposal.status = STATUS_REJECTED;
-        } else {
-            return // Not enough votes yet
-        };
 
-        proposal.resolved_at = tx_context::epoch(ctx);
-
-        event::emit(ProposalResolved {
-            proposal_id: object::id(proposal),
-            status: proposal.status,
-            approve_votes: proposal.approve_votes,
-            reject_votes: proposal.reject_votes,
-        });
-    }
-
-    // Execute proposal (apply rewards/penalties)
-    public fun execute_proposal(
+    // Internal function to execute proposal (called automatically after voting)
+    fun execute_proposal_internal(
         proposal: &mut Proposal,
         message: &mut Message,
         treasury: &mut Treasury,
@@ -268,22 +298,22 @@ module suiworld::vote {
 
         if (proposal.proposal_type == PROPOSAL_TYPE_HYPE) {
             // Update message status to HYPED
-            message::update_message_status(message, 2); // STATUS_HYPED
+            message::update_message_status(message, message::status_hyped());
 
             // Reward creator: +100 SWT
-            token::transfer_from_treasury(treasury, HYPE_CREATOR_REWARD, message_author, ctx);
+            token::transfer_from_treasury_internal(treasury, HYPE_CREATOR_REWARD, message_author, ctx);
 
             // Reward each voting manager: +10 SWT
             let mut i = 0;
             while (i < vector::length(&proposal.voters)) {
                 let voter = *vector::borrow(&proposal.voters, i);
-                token::transfer_from_treasury(treasury, HYPE_MANAGER_REWARD, voter, ctx);
+                token::transfer_from_treasury_internal(treasury, HYPE_MANAGER_REWARD, voter, ctx);
                 i = i + 1;
             };
 
         } else if (proposal.proposal_type == PROPOSAL_TYPE_SCAM) {
             // Update message status to SPAM
-            message::update_message_status(message, 3); // STATUS_SPAM
+            message::update_message_status(message, message::status_spam());
 
             // Creator penalty: -200 SWT (handled separately through slashing)
             // For now, just reward managers
@@ -292,12 +322,22 @@ module suiworld::vote {
             let mut i = 0;
             while (i < vector::length(&proposal.voters)) {
                 let voter = *vector::borrow(&proposal.voters, i);
-                token::transfer_from_treasury(treasury, SCAM_MANAGER_REWARD, voter, ctx);
+                token::transfer_from_treasury_internal(treasury, SCAM_MANAGER_REWARD, voter, ctx);
                 i = i + 1;
             };
         };
 
         proposal.status = STATUS_EXECUTED;
+    }
+
+    // Public wrapper for execute_proposal (for manual execution if needed)
+    public fun execute_proposal(
+        proposal: &mut Proposal,
+        message: &mut Message,
+        treasury: &mut Treasury,
+        ctx: &mut TxContext
+    ) {
+        execute_proposal_internal(proposal, message, treasury, ctx);
     }
 
     // BFT check for manager misjudgements
@@ -351,5 +391,133 @@ module suiworld::vote {
 
     public fun get_proposal_type(proposal: &Proposal): u8 {
         proposal.proposal_type
+    }
+
+    // ============ Manager Resolution Functions (BFT) ============
+
+    // Create a manager resolution proposal (to remove a malicious manager)
+    public fun create_manager_resolution(
+        manager_registry: &ManagerRegistry,
+        target_manager: address,
+        reason: vector<u8>,
+        ctx: &mut TxContext
+    ): ID {
+        let proposer = tx_context::sender(ctx);
+
+        // Only managers can propose manager resolution
+        assert!(manager_nft::is_manager(manager_registry, proposer), ENotManager);
+
+        // Cannot propose to remove yourself
+        assert!(proposer != target_manager, ENotManager);
+
+        let resolution = ManagerResolutionProposal {
+            id: object::new(ctx),
+            target_manager,
+            reason,
+            proposer,
+            approve_votes: 0,
+            reject_votes: 0,
+            voters: vector::empty(),
+            status: STATUS_OPEN,
+            created_at: tx_context::epoch(ctx),
+            resolved_at: 0,
+        };
+
+        let resolution_id = object::id(&resolution);
+
+        transfer::share_object(resolution);
+
+        resolution_id
+    }
+
+    // Vote on manager resolution (BFT voting)
+    public fun vote_manager_resolution(
+        resolution: &mut ManagerResolutionProposal,
+        manager_registry: &ManagerRegistry,
+        vote: bool,
+        ctx: &mut TxContext
+    ) {
+        let voter = tx_context::sender(ctx);
+
+        // Only managers can vote
+        assert!(manager_nft::is_manager(manager_registry, voter), ENotManager);
+
+        // Cannot vote if already resolved
+        assert!(resolution.status == STATUS_OPEN, EProposalNotOpen);
+
+        // Check if already voted
+        let mut already_voted = false;
+        let mut i = 0;
+        while (i < vector::length(&resolution.voters)) {
+            if (*vector::borrow(&resolution.voters, i) == voter) {
+                already_voted = true;
+                break
+            };
+            i = i + 1;
+        };
+        assert!(!already_voted, EAlreadyVoted);
+
+        // Record vote
+        vector::push_back(&mut resolution.voters, voter);
+
+        if (vote) {
+            resolution.approve_votes = resolution.approve_votes + 1;
+        } else {
+            resolution.reject_votes = resolution.reject_votes + 1;
+        };
+
+        // Check if resolution reached quorum (8 out of 12 for manager removal)
+        let bft_quorum = 8; // 2/3 of 12 managers
+        if (resolution.approve_votes >= bft_quorum) {
+            resolution.status = STATUS_PASSED;
+            resolution.resolved_at = tx_context::epoch(ctx);
+            // Manager will be removed via execute_manager_resolution
+        } else if (resolution.reject_votes >= 5) { // More than 1/3 reject = fail
+            resolution.status = STATUS_REJECTED;
+            resolution.resolved_at = tx_context::epoch(ctx);
+        }
+    }
+
+    // Execute manager resolution (remove the manager and burn their NFT)
+    public fun execute_manager_resolution(
+        resolution: &ManagerResolutionProposal,
+        manager_registry: &mut ManagerRegistry,
+        ctx: &mut TxContext
+    ) {
+        // Resolution must be passed
+        assert!(resolution.status == STATUS_PASSED, EQuorumNotReached);
+
+        // Slash the manager NFT
+        manager_nft::slash_manager_for_misconduct(
+            manager_registry,
+            resolution.target_manager,
+            ctx
+        );
+    }
+
+    // Track misjudgements for BFT consensus
+    public fun update_misjudgement_count(
+        vote_history: &mut ManagerVoteHistory,
+        manager: address,
+        proposal_id: ID,
+        was_correct: bool
+    ) {
+        if (!table::contains(&vote_history.misjudgement_counts, manager)) {
+            table::add(&mut vote_history.misjudgement_counts, manager, 0);
+        };
+
+        if (!was_correct) {
+            let count = table::borrow_mut(&mut vote_history.misjudgement_counts, manager);
+            *count = *count + 1;
+
+            // If too many misjudgements, it can trigger a resolution proposal
+            if (*count >= 3) {
+                event::emit(ManagerMisjudgementDetected {
+                    manager,
+                    proposal_id,
+                    misjudgement_count: *count,
+                });
+            };
+        };
     }
 }

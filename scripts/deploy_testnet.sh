@@ -279,7 +279,7 @@ main() {
     check_balance
 
     # Step 3: Update Move.toml
-    update_move_toml
+    # update_move_toml
 
     # Step 4: Build package
     if ! build_package; then
