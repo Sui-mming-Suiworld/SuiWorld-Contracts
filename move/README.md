@@ -14,7 +14,6 @@ sources/
 ├── manager_nft.move    # 매니저 NFT 시스템
 ├── message.move        # 메시지 CRUD 작업
 ├── vote.move           # 투표 및 거버넌스
-├── swap.move           # DEX 기능
 ├── rewards.move        # 보상 분배
 └── slashing.move       # 패널티 시스템
 ```
@@ -23,7 +22,6 @@ sources/
 
 ```mermaid
 graph TD
-    token --> swap
     token --> rewards
     token --> slashing
     manager_nft --> message
@@ -41,18 +39,18 @@ SWT (SuiWorld Token) 토큰의 생성과 관리를 담당합니다.
 
 **주요 기능:**
 - 토큰 발행 (100M SWT)
-- 트레저리 관리 (30%)
-- 스왑 풀 (70%)
+- 트레저리 관리 (100% 초기 공급)
 - 보상 전송
 - 토큰 소각
+- 외부 DEX 리스팅 지원
 
 **초기화 파라미터:**
 ```move
 TOTAL_SUPPLY = 100,000,000 SWT
-TREASURY_PERCENTAGE = 30%
-POOL_PERCENTAGE = 70%
 DECIMALS = 6
 ```
+
+**참고:** 모든 초기 공급량은 트레저리에 보관되며, 외부 DEX(예: Cetus, Turbos)에서 유동성을 제공할 수 있습니다.
 
 ### 2. Manager NFT Module (`manager_nft.move`)
 
@@ -114,23 +112,7 @@ SCAM 통과시:
 - 투표 매니저: +10 SWT
 ```
 
-### 5. Swap Module (`swap.move`)
-
-SUI ↔ SWT 토큰 교환을 위한 AMM입니다.
-
-**주요 기능:**
-- Constant Product AMM (x*y=k)
-- 0.3% 스왑 수수료
-- 유동성 추가/제거
-- 슬리피지 보호
-
-**수수료 구조:**
-```
-SWAP_FEE = 0.3% (30 BPS)
-MIN_LIQUIDITY = 1000
-```
-
-### 6. Rewards Module (`rewards.move`)
+### 5. Rewards Module (`rewards.move`)
 
 보상 분배 시스템입니다.
 
@@ -146,7 +128,7 @@ WEEKLY_AIRDROP = 1000 SWT
 대상: Cooking 메시지 작성자
 ```
 
-### 7. Slashing Module (`slashing.move`)
+### 6. Slashing Module (`slashing.move`)
 
 부정 행위에 대한 패널티 시스템입니다.
 
