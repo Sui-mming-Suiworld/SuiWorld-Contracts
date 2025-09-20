@@ -139,14 +139,14 @@ export default function MyPage() {
               aria-expanded={showSettings}
               aria-label="설정 메뉴 열기"
             >
-              <SettingsIcon className="h-5 w-5" />
+              <Image src="/settings.png" alt="설정" width={20} height={20} className="h-5 w-5 object-contain" />
             </button>
             <button
               type="button"
               className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:text-slate-900"
               aria-label="프로필 공유"
             >
-              <ShareIcon className="h-5 w-5" />
+              <Image src="/share.png" alt="공유" width={20} height={20} className="h-5 w-5 object-contain" />
             </button>
           </div>
         </div>
@@ -239,56 +239,23 @@ type IconProps = {
   className?: string;
 };
 
-function SettingsIcon({ className }: IconProps) {
+function FlagIcon({ className }: IconProps) {
   return (
     <svg
       className={className}
-      viewBox="0 0 24 24"
+      viewBox="0 0 20 20"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
       <path
-        d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
+        d="M5 2v16"
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
-        d="m19.4 13.5-.63 1.1a1.5 1.5 0 0 0 .16 1.7l.05.07a1.5 1.5 0 0 1-1.06 2.4l-1.27.05a1.5 1.5 0 0 0-1.33.88l-.47 1.2a1.5 1.5 0 0 1-2.8 0l-.47-1.2a1.5 1.5 0 0 0-1.33-.88l-1.27-.05a1.5 1.5 0 0 1-1.06-2.4l.05-.07a1.5 1.5 0 0 0 .16-1.7l-.63-1.1a1.5 1.5 0 0 1 .55-2.03l1.1-.63a1.5 1.5 0 0 0 .72-1.3l-.03-1.27a1.5 1.5 0 0 1 2.4-1.06l.07.05a1.5 1.5 0 0 0 1.7.16l1.1-.63a1.5 1.5 0 0 1 2.03.55l.63 1.1a1.5 1.5 0 0 0 1.3.72l1.27-.03a1.5 1.5 0 0 1 1.06 2.4l-.05.07a1.5 1.5 0 0 0-.16 1.7l.63 1.1a1.5 1.5 0 0 1-.55 2.03l-1.1.63a1.5 1.5 0 0 0-.72 1.3"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function ShareIcon({ className }: IconProps) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M15 4h5v5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M14.5 9.5 20 4"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M11 5h-3a4 4 0 0 0-4 4v8a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4v-3"
+        d="M5 3h9l-1.5 3L14 9H5"
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinecap="round"
@@ -306,6 +273,23 @@ type AdminPanelProps = {
 };
 
 function AdminPanel({ profile, menuItems, members, onClose }: AdminPanelProps) {
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [reportTarget, setReportTarget] = useState<AdminMember | null>(null);
+
+  const toggleMemberSelection = (member: AdminMember) => {
+    setSelectedMemberId((previous) =>
+      previous === member.address ? null : member.address
+    );
+  };
+
+  const openReportPrompt = (member: AdminMember) => {
+    setReportTarget(member);
+  };
+
+  const closeReportPrompt = () => {
+    setReportTarget(null);
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6 py-10"
@@ -359,28 +343,84 @@ function AdminPanel({ profile, menuItems, members, onClose }: AdminPanelProps) {
           </div>
 
           <div className="space-y-4">
-            {members.map((member) => (
-              <div
-                key={member.name}
-                className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3"
-              >
-                <div className="h-12 w-12 overflow-hidden rounded-full bg-slate-100">
-                  <Image
-                    src={member.avatar}
-                    alt={`${member.name} profile image`}
-                    width={48}
-                    height={48}
-                    className="h-full w-full object-cover"
-                  />
+            {members.map((member) => {
+              const isSelected = selectedMemberId === member.address;
+
+              return (
+                <div
+                  key={member.address}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => toggleMemberSelection(member)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      toggleMemberSelection(member);
+                    }
+                  }}
+                  className={`flex cursor-pointer items-center justify-between gap-3 rounded-2xl border px-4 py-3 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue/50 ${isSelected ? "border-red-300 bg-red-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300"}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 overflow-hidden rounded-full bg-slate-100">
+                      <Image
+                        src={member.avatar}
+                        alt={`${member.name} profile image`}
+                        width={48}
+                        height={48}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="text-sm text-slate-600">
+                      <div className="font-semibold text-slate-900">{member.name}</div>
+                      <div className="font-mono text-xs text-slate-500">{member.address}</div>
+                    </div>
+                  </div>
+                  {isSelected ? (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        openReportPrompt(member);
+                      }}
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500 text-white shadow-sm transition hover:bg-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
+                      aria-label={`${member.name} 신고`}
+                    >
+                      <FlagIcon className="h-5 w-5" />
+                    </button>
+                  ) : null}
                 </div>
-                <div className="text-sm text-slate-600">
-                  <div className="font-semibold text-slate-900">{member.name}</div>
-                  <div className="font-mono text-xs text-slate-500">{member.address}</div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
+
+        {reportTarget ? (
+          <div
+            className="absolute inset-0 z-20 flex items-center justify-center bg-black/20 px-6"
+            onClick={(event) => {
+              event.stopPropagation();
+              closeReportPrompt();
+            }}
+          >
+            <div
+              className="w-full max-w-xs rounded-3xl bg-white text-center shadow-xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="px-6 pt-6">
+                <p className="text-base font-semibold text-slate-900">신고하시겠습니까?</p>
+                <p className="mt-2 text-xs text-slate-500">신고 시 관리자 권한에 영향을 줄 수 있습니다.</p>
+              </div>
+              <div className="mt-6 grid grid-cols-2 border-t border-slate-200 text-sm font-semibold text-brand-blue">
+                <button type="button" onClick={closeReportPrompt} className="py-3">
+                  아니오
+                </button>
+                <button type="button" onClick={closeReportPrompt} className="py-3">
+                  예
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 // frontend/app/layout.tsx
 import type { Metadata } from "next";
 import "./globals.css";
+import Image from "next/image";
 import { TabBar } from "./components/TabBar";
 
 export const metadata: Metadata = {
@@ -14,9 +15,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-white text-slate-900 antialiased">
         <div className="relative mx-auto flex min-h-screen max-w-[420px] flex-col bg-white">
           <header className="flex items-center gap-3 border-b border-slate-200 p-4">
-            <div className="grid h-8 w-8 place-items-center rounded-full bg-brand-blue/10">
-              <div className="h-4 w-4 rounded-full bg-brand-blue" />
-            </div>
+            <Image
+              src="/sui-world-letter.png"
+              alt="SuiWorld lettering"
+              width={120}
+              height={32}
+              className="h-8 w-auto"
+              priority
+            />
+            <Image
+              src="/sui-world-logo.png"
+              alt="SuiWorld logo"
+              width={48}
+              height={48}
+              className="h-10 w-10"
+              priority
+            />
             <div className="flex-1">
               <div className="flex h-10 items-center rounded-full border border-slate-200 bg-white px-3 shadow-sm">
                 <input

@@ -1,13 +1,26 @@
 // frontend/components/TabBar.tsx
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export function TabBar() {
   const pathname = usePathname();
-  const Item = ({ href, label, icon }: { href: string; label: string; icon: string }) => {
+  const Item = ({
+    href,
+    label,
+    iconBase,
+    iconScale = 1,
+  }: {
+    href: string;
+    label: string;
+    iconBase: string;
+    iconScale?: number;
+  }) => {
     const active = pathname === href;
+    const iconSrc = `/${iconBase}${active ? "-blue" : ""}.png`;
+    const imageStyle = iconScale !== 1 ? { transform: `scale(${iconScale})` } : undefined;
     return (
       <Link
         href={href}
@@ -15,12 +28,15 @@ export function TabBar() {
           active ? "text-brand-blue" : "text-slate-500 hover:text-slate-700"
         }`}
       >
-        <div
-          className={`mb-1 grid h-6 w-6 place-items-center rounded-2xl ${
-            active ? "bg-brand-blue text-white" : "bg-slate-100 text-slate-500"
-          }`}
-        >
-          <span>{icon}</span>
+        <div className="relative mb-1 flex h-6 w-6 items-center justify-center">
+          <Image
+            src={iconSrc}
+            alt={`${label} icon`}
+            fill
+            className="object-contain"
+            sizes="24px"
+            style={imageStyle}
+          />
         </div>
         {label}
       </Link>
@@ -29,10 +45,10 @@ export function TabBar() {
 
   return (
     <div className="mx-4 flex rounded-2xl border border-slate-200 bg-white px-3 shadow-sm">
-      <Item href="/" label="Home" icon="H" />
-      <Item href="/cooking" label="Cooking" icon="C" />
-      <Item href="/wallet" label="Wallet" icon="W" />
-      <Item href="/mypage" label="My Page" icon="P" />
+      <Item href="/" label="Home" iconBase="home" />
+      <Item href="/cooking" label="Cooking" iconBase="cooking" iconScale={0.85} />
+      <Item href="/wallet" label="Wallet" iconBase="wallet" />
+      <Item href="/mypage" label="My Page" iconBase="my-page" iconScale={0.85} />
     </div>
   );
 }

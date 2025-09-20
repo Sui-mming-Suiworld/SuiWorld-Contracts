@@ -15,9 +15,6 @@ export function AddressBox() {
           복사
         </button>
       </div>
-      <div className="grid aspect-square place-items-center rounded-2xl border border-slate-200 bg-white text-slate-900">
-        <span className="font-semibold">QR</span>
-      </div>
     </div>
   );
 }

@@ -1,8 +1,9 @@
 // frontend/app/components/FeedCard.tsx
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type MouseEvent, type ReactNode } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 type Props = {
@@ -12,21 +13,81 @@ type Props = {
   avatarSrc?: string;
   avatarAlt?: string;
   footer?: ReactNode;
+  initialLikes?: number;
+  initialComments?: number;
+  onCommentClick?: () => void;
 };
 
-export function FeedCard({ id, name, text, avatarSrc, avatarAlt, footer }: Props) {
+export function FeedCard({
+  id,
+  name,
+  text,
+  avatarSrc,
+  avatarAlt,
+  footer,
+  initialLikes = 3,
+  initialComments = 1,
+  onCommentClick,
+}: Props) {
+  const router = useRouter();
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(initialLikes);
+
+  const likeIconSrc = liked ? "/like-clicked.png" : "/like.png";
+  const commentIconSrc = "/comment.png";
+  const commentCount = initialComments;
+
+  const handleLikeClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const delta = liked ? -1 : 1;
+    setLikeCount((count) => {
+      const nextCount = Math.max(0, Math.min(count + delta, 9));
+      return nextCount;
+    });
+    setLiked((previous) => !previous);
+  };
+
+  const handleCommentClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (id) {
+      router.push(`/post/${id}`);
+      return;
+    }
+    if (onCommentClick) {
+      onCommentClick();
+    }
+  };
+
   const footerContent =
     footer !== undefined ? (
       footer
     ) : (
-      <div className="flex items-center gap-4 text-sm text-slate-500">
-        <span>Like</span>
-        <span>Comment</span>
+      <div className="flex items-center gap-6 text-sm text-slate-500">
+        <button
+          type="button"
+          onClick={handleLikeClick}
+          className="flex items-center gap-2 text-slate-600 transition hover:text-slate-800"
+          aria-label="좋아요"
+        >
+          <Image src={likeIconSrc} alt="좋아요" width={20} height={20} className="h-5 w-5" />
+          <span>{likeCount}</span>
+        </button>
+        <button
+          type="button"
+          onClick={handleCommentClick}
+          className="flex items-center gap-2 text-slate-600 transition hover:text-slate-800"
+          aria-label="댓글 쓰기"
+        >
+          <Image src={commentIconSrc} alt="댓글" width={20} height={20} className="h-5 w-5" />
+          <span>{commentCount}</span>
+        </button>
       </div>
     );
 
   const CardBody = (
-    <div className="rounded-2xl bg-slate-100 p-4 space-y-2 text-slate-900">
+    <div className="rounded-2xl bg-white p-4 space-y-2 text-slate-900">
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white">
           {avatarSrc ? (
@@ -44,7 +105,7 @@ export function FeedCard({ id, name, text, avatarSrc, avatarAlt, footer }: Props
         <div className="text-sm font-medium text-slate-700">{name}</div>
       </div>
 
-      <div className="rounded-2xl bg-white p-3 text-sm leading-relaxed text-slate-800 shadow-sm">
+      <div className="rounded-2xl bg-white p-3 text-sm leading-relaxed text-slate-800">
         {text}
       </div>
 
