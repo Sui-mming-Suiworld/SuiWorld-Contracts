@@ -13,50 +13,63 @@ type ErrorDisplay = {
   message: string;
 };
 
-// Assuming the correct ExchangeResult type looks like this
-// This is not part of the file, but for your understanding
-// type ExchangeResult =
-//   | { success: true; profile: unknown }
-//   | { success: false; reason: string; message?: string };
-
 export default function OnboardingPage() {
   const router = useRouter();
-  const { loginWithGoogle, exchangeSupabaseSession, logout } = useAuth();
+  const { loginWithGoogle, exchangeSupabaseSession, finalizeOAuth, logout } = useAuth();
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<ErrorDisplay | null>(null);
 
   useEffect(() => {
-    const run = async () => {
-      const result = await exchangeSupabaseSession();
+    let cancelled = false;
 
-      // Type guard: Check if the exchange was NOT successful
-      if (!result.success) {
-        // Now TypeScript knows result is { success: false; reason: string; message?: string }
-        if ("reason" in result && result.reason === "exchange-failed") {
-          setStatus("error");
-          setError({
-            message: result.message ?? "Failed to connect your Supabase session.",
-          });
+    const run = async () => {
+      try {
+        setStatus("working");
+        const hasSession = await finalizeOAuth();
+        if (!hasSession) {
+          if (!cancelled) {
+            setStatus("idle");
+            setError(null);
+          }
           return;
         }
 
-        // If not 'exchange-failed', no error should be displayed
-        setStatus("idle");
-        setError(null);
-        return;
-      }
+        const result = await exchangeSupabaseSession();
 
-      // This block runs only if `result.success` is `true`
-      setStatus("success");
-      setError(null);
-      setTimeout(() => router.push("/"), 800);
+        if (!result.success) {
+          if (!cancelled) {
+            if ("reason" in result && result.reason === "exchange-failed") {
+              setStatus("error");
+              setError({ message: result.message ?? "Failed to connect your Supabase session." });
+              return;
+            }
+
+            setStatus("idle");
+            setError(null);
+          }
+          return;
+        }
+
+        if (!cancelled) {
+          setStatus("success");
+          setError(null);
+          setTimeout(() => router.push("/"), 400);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const message = err instanceof Error ? err.message : "Unexpected error during onboarding";
+          setStatus("error");
+          setError({ message });
+        }
+      }
     };
 
-    run().catch((err: Error) => {
-      setStatus("error");
-      setError({ message: err.message });
-    });
-  }, [exchangeSupabaseSession, router]);
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [exchangeSupabaseSession, finalizeOAuth, router]);
 
   const handleGoogleLogin = async () => {
     setStatus("working");

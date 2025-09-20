@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     SUPABASE_URL: AnyHttpUrl
     SUPABASE_ANON_KEY: str
     SUPABASE_SERVICE_ROLE_KEY: str
+    SUPABASE_JWT_SECRET: str
+    SUPABASE_ADDRESS_SALT: str
+
     DATABASE_URL: str
 
     SECRET_KEY: str
@@ -33,7 +36,8 @@ class Settings(BaseSettings):
         return value
 
     def supabase_issuer(self) -> str:
-        return str(self.SUPABASE_JWT_ISSUER or f"{self.SUPABASE_URL.rstrip('/')}/auth/v1")
+        base = self.SUPABASE_JWT_ISSUER or f"{str(self.SUPABASE_URL).rstrip('/')}/auth/v1"
+        return str(base)
 
 
 settings = Settings()

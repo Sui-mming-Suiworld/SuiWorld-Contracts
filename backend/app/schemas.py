@@ -1,6 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -52,15 +53,19 @@ class AuthSession(BaseModel):
 class UserProfileRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: Optional[int] = Field(default=None, description="Internal numeric identifier")
+    id: Optional[UUID] = Field(default=None, description="Profile identifier (UUID)")
     supabase_id: Optional[str] = Field(
         default=None, description="Supabase auth identifier for this user"
     )
     email: Optional[str] = Field(default=None, description="User email address")
     sui_address: Optional[str] = Field(default=None, description="Linked Sui address")
+    display_name: Optional[str] = Field(default=None, description="Display name provided by the identity provider")
+    avatar_url: Optional[str] = Field(default=None, description="Avatar sourced from the identity provider")
     session_key: Optional[str] = Field(
         default=None, description="Latest ephemeral session key for zkLogin"
     )
+    created_at: Optional[datetime] = Field(default=None, description="Profile creation timestamp")
+    updated_at: Optional[datetime] = Field(default=None, description="Last profile update timestamp")
 
 
 class SupabaseLoginResponse(BaseModel):

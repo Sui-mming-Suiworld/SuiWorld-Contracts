@@ -7,16 +7,56 @@ import { supabase } from "@/lib/supabase/client";
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8000";
 const SESSION_STORAGE_KEY = "suiworld.session";
 
+export type BackendProfile = {
+  id: number;
+  supabase_id: string | null;
+  email: string | null;
+  sui_address: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  session_key: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
+export type BackendSession = {
+  token: string;
+  expires_at: string;
+};
+
+export type SupabaseExchangePayload = {
+  profile: BackendProfile;
+  session: BackendSession;
+};
+
 type ExchangeResult =
-  | { success: true; profile: unknown }
+  | { success: true; data: SupabaseExchangePayload }
   | { success: false; reason: "missing-session" | "exchange-failed"; message?: string };
+
+const persistSession = (payload: SupabaseExchangePayload) => {
+  localStorage.setItem(
+    SESSION_STORAGE_KEY,
+    JSON.stringify({
+      token: payload.session.token,
+      expiresAt: payload.session.expires_at,
+      profile: payload.profile,
+    }),
+  );
+};
+
+const isAnonymousSession = (session: Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"]) => {
+  const provider = session?.user?.app_metadata?.provider;
+  return !session?.user || provider === "anonymous" || provider === undefined;
+};
 
 export const useAuth = () => {
   const loginWithGoogle = useCallback(async () => {
     const redirectTo = `${window.location.origin}/onboarding`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo },
+      options: {
+        redirectTo,
+      },
     });
     if (error) {
       throw error;
@@ -26,8 +66,12 @@ export const useAuth = () => {
   const exchangeSupabaseSession = useCallback(async (): Promise<ExchangeResult> => {
     const { data } = await supabase.auth.getSession();
     const session = data.session;
-    const accessToken = session?.access_token;
 
+    if (!session || isAnonymousSession(session)) {
+      return { success: false, reason: "missing-session" };
+    }
+
+    const accessToken = session.access_token;
     if (!accessToken) {
       return { success: false, reason: "missing-session" };
     }
@@ -38,25 +82,62 @@ export const useAuth = () => {
       body: JSON.stringify({ access_token: accessToken }),
     });
 
-    const payload = await response.json();
+    const payload = (await response.json()) as SupabaseExchangePayload | { detail?: string };
     if (!response.ok) {
       return {
         success: false,
         reason: "exchange-failed",
-        message: payload?.detail ?? "Unable to exchange Supabase session",
+        message: (payload as { detail?: string }).detail ?? "Unable to exchange Supabase session",
       };
     }
 
-    localStorage.setItem(
-      SESSION_STORAGE_KEY,
-      JSON.stringify({
-        token: payload.session.token,
-        expiresAt: payload.session.expires_at,
-        profile: payload.profile,
-      }),
-    );
+    const typedPayload = payload as SupabaseExchangePayload;
+    persistSession(typedPayload);
 
-    return { success: true, profile: payload.profile };
+    return { success: true, data: typedPayload };
+  }, []);
+
+  const finalizeOAuth = useCallback(async (): Promise<boolean> => {
+    const currentUrl = new URL(window.location.href);
+    let shouldReplaceUrl = false;
+
+    if (currentUrl.hash.includes("access_token")) {
+      const hashParams = new URLSearchParams(currentUrl.hash.slice(1));
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
+
+      if (accessToken) {
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken ?? undefined,
+        });
+        if (error) {
+          throw error;
+        }
+      }
+
+      currentUrl.hash = "";
+      shouldReplaceUrl = true;
+    }
+
+    const code = currentUrl.searchParams.get("code");
+    const state = currentUrl.searchParams.get("state");
+    if (code && state) {
+      const { error } = await supabase.auth.exchangeCodeForSession(currentUrl.toString());
+      if (error) {
+        throw error;
+      }
+      currentUrl.searchParams.delete("code");
+      currentUrl.searchParams.delete("state");
+      shouldReplaceUrl = true;
+    }
+
+    if (shouldReplaceUrl) {
+      window.history.replaceState({}, document.title, currentUrl.pathname + currentUrl.search);
+    }
+
+    const { data } = await supabase.auth.getSession();
+    return Boolean(data.session && !isAnonymousSession(data.session));
   }, []);
 
   const logout = useCallback(async () => {
@@ -67,6 +148,7 @@ export const useAuth = () => {
   return {
     loginWithGoogle,
     exchangeSupabaseSession,
+    finalizeOAuth,
     logout,
   };
 };
