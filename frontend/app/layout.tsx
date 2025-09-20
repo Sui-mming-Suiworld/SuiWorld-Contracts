@@ -2,7 +2,14 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Image from "next/image";
+import { Noto_Sans_KR } from "next/font/google";
 import { TabBar } from "./components/TabBar";
+
+const notoSans = Noto_Sans_KR({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "SuiWorld Web",
@@ -12,7 +19,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <body className="min-h-screen bg-white text-slate-900 antialiased">
+      <body className={`${notoSans.className} min-h-screen bg-white text-slate-900 antialiased`}>
         <div className="relative mx-auto flex min-h-screen max-w-[420px] flex-col bg-white">
           <header className="flex items-center gap-3 border-b border-slate-200 p-4">
             <Image
@@ -23,24 +30,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               className="h-10 w-10"
               priority
             />
-            <Image
-              src="/sui-world-letter.png"
-              alt="SuiWorld lettering"
-              width={60}
-              height={16}
-              className="h-4 w-auto"
-              priority
-            />
+
             <div className="flex-1">
               <div className="flex h-10 items-center rounded-full border border-slate-200 bg-white px-3 shadow-sm">
                 <input
                   className="flex-1 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
-                  placeholder="Value"
+                  placeholder="SuiWorld"
                 />
                 <button
                   className="text-sm text-slate-400 transition hover:text-slate-600"
                   type="button"
-                  aria-label="검색어 지우기"
+                  aria-label="검?�어 지?�기"
                 >
                   ×
                 </button>
@@ -60,3 +60,5 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+
+

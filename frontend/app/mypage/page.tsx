@@ -19,19 +19,19 @@ type SimplePost = {
 };
 
 const profile = {
-  name: "오승준",
-  handle: "@oh",
+  name: "Seungjun Oh",
+  handle: "@seungjunoh",
   address: "0xf2abe...8b4b4",
-  status: "안녕하세요, PDAO의 대장 오승준입니다.",
-  following: "123",
-  followers: "456",
+  status: "Organizer @PDAO | interested in TradFi <> Crypto, Blockchain Technology",
+  following: "153",
+  followers: "177",
   avatar: "/oh-seungjun.png",
 };
 
 const myPosts: SimplePost[] = [
   {
     id: "oh-1",
-    text: "마라 홀딩스 홀더입니다. 비트 가즈아",
+    text: "DSRV Sui Foundation 에서 호스팅하는 Sui-mming Seoul 해커톤에 참여하였습니다. 엄청 큰 규모로 많은 빌더들이 모인 것 같네요!",
   },
 ];
 

@@ -49,16 +49,17 @@ export default function HomePage() {
         <Chip label="Other" />
       </div>
 
-      <div className="space-y-3">
+      <div className="divide-y divide-slate-200">
         {posts.map((post) => (
-          <FeedCard
-            key={post.id}
-            id={post.id}
-            name={post.name}
-            text={post.text}
-            initialLikes={post.likes}
-            initialComments={post.comments}
-          />
+          <div key={post.id} className="py-3 first:pt-0 last:pb-0">
+            <FeedCard
+              id={post.id}
+              name={post.name}
+              text={post.text}
+              initialLikes={post.likes}
+              initialComments={post.comments}
+            />
+          </div>
         ))}
       </div>
     </div>
