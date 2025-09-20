@@ -2,8 +2,7 @@
 module suiworld::token_tests {
     use sui::test_scenario::{Self as test, Scenario, next_tx, ctx};
     use sui::coin::{Self, Coin, burn_for_testing};
-    use suiworld::token::{Self, SWT, Treasury, SwapPool};
-    use suiworld::swap::{Self};
+    use suiworld::token::{Self, SWT, Treasury};
 
     const TEST_ADDR: address = @0xA;
     const TEST_ADDR2: address = @0xB;
@@ -50,10 +49,6 @@ module suiworld::token_tests {
             assert!(test::has_most_recent_shared<Treasury>(), 0);
         };
 
-        // Verify SwapPool exists and is shared
-        {
-            assert!(test::has_most_recent_shared<SwapPool>(), 1);
-        };
 
         test::end(scenario);
     }

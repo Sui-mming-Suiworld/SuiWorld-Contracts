@@ -143,22 +143,23 @@ sui client call \
     --gas-budget 10000000
 ```
 
-### Example: Swap SUI to SWT
+### Example: Transfer from Treasury
 
 ```bash
 sui client call \
     --package <PACKAGE_ID> \
-    --module swap \
-    --function swap_sui_to_swt \
-    --args <POOL_ID> <SUI_COIN> <MIN_SWT_OUT> \
+    --module token \
+    --function transfer_from_treasury \
+    --args <TREASURY_ID> <AMOUNT> <RECIPIENT> \
     --gas-budget 10000000
 ```
+
+**Note**: SWT tokens can be traded on external DEXs like Cetus or Turbos after listing.
 
 ## Object IDs
 
 After deployment, important object IDs will be created:
 - Treasury (from token module)
-- SwapPool (from token module)
 - ManagerRegistry (from manager_nft module)
 - MessageBoard (from message module)
 - VotingSystem (from vote module)
