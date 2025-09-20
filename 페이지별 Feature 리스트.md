@@ -70,11 +70,9 @@ SCAM: 창작자 -200 SWT, 매니저 +10 SWT **checked**
 
 Misjudgement(후속): 전원 투표 후 BFT 모델로 오판 검사 → 잦은 오판 시 매니저 NFT 슬래시·교체(표시). **checked**
 
-5) Swap (/swap)
+5) Wallet (/wallet)
 
-SUI↔SWT 고정가 스왑(최소): 견적, 사용자 서명, swaps/tx_logs 기록 **checked**
-
-잔액 표시: SUI/SWT **checked**
+지갑이 보유하고 있는 SuiWorld Token (SWT), Sui (SUI), Wormhole Bridged ETH (ETH), Wormhole Bridged SOL (SOL)의 잔액 표시 **checked**
 
 SWT 발행/풀 설정: 팀 트레저리 30%, 풀 70% 초기화(데브넷 스크립트) **checked**
 

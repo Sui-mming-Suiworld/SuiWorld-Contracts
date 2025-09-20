@@ -38,7 +38,7 @@ SuiWorld는 Sui 블록체인 위에서 동작하는 탈중앙 커뮤니티 애�
 
 ### `/move`
 - Sui Move 모듈이 위치한 영역.
-- `sources/`: 토큰, 투표, 스왑 로직 등이 들어 있는 Move 소스. 과거 갤러리 관련 모듈(`gallery.move`)은 순차적으로 정리 예정입니다.
+- `sources/`: 토큰, 투표, 로직 등이 들어 있는 Move 소스. 과거 갤러리 관련 모듈(`gallery.move`)은 순차적으로 정리 예정입니다.
 - `Move.toml`: Move 패키지 설정.
 
 ### `/scripts`
