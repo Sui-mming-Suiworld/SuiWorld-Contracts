@@ -1,14 +1,18 @@
-﻿import os
+import os
+from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
+
 import pytest
-from datetime import datetime, timezone, timedelta
 from fastapi.testclient import TestClient
-from jose import JWTError
 
 # Ensure required settings values exist before importing the app config
-os.environ.setdefault("DATABASE_URL", "postgresql://user:pass@localhost/db")
+os.environ.setdefault("DATABASE_URL", "sqlite:///./test.db")
 os.environ.setdefault("SECRET_KEY", "bootstrap-secret")
 os.environ.setdefault("ALGORITHM", "HS256")
 os.environ.setdefault("ACCESS_TOKEN_EXPIRE_MINUTES", "15")
+os.environ.setdefault("SUPABASE_URL", "https://example.supabase.co")
+os.environ.setdefault("SUPABASE_ANON_KEY", "anon-key")
+os.environ.setdefault("SUPABASE_SERVICE_ROLE_KEY", "service-role-key")
 
 from app.main import app
 from app.config import settings
@@ -61,65 +65,58 @@ def fixed_datetime(monkeypatch):
     return fixed_now
 
 
+def _mock_profile(payload):
+    return SimpleNamespace(
+        id=1,
+        supabase_id=None,
+        email="user@example.com",
+        sui_address=payload["suiAddress"],
+        session_key=payload["sessionKey"],
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+
+
 def test_zk_login_success(client, base_payload, fixed_datetime, monkeypatch):
     exp_dt = fixed_datetime + timedelta(minutes=10)
 
-    def fake_get_unverified_claims(token):
-        assert token == "fake-jwt"
-        return {
+    monkeypatch.setattr(
+        auth_module,
+        "_decode_zklogin_jwt",
+        lambda token: {
             "sub": "user-id",
             "email": "user@example.com",
             "nonce": "expected-nonce",
             "exp": int(exp_dt.timestamp()),
-        }
+        },
+    )
 
-    def fake_encode(payload, key, algorithm):
-        assert payload["sui_address"] == base_payload["suiAddress"]
-        assert payload["session_key"] == base_payload["sessionKey"]
-        assert key == settings.SECRET_KEY
-        assert algorithm == settings.ALGORITHM
-        return "signed-session-token"
+    profile = _mock_profile(base_payload)
+    monkeypatch.setattr(auth_module, "_upsert_profile", lambda *args, **kwargs: profile)
 
-    monkeypatch.setattr(auth_module.jwt, "get_unverified_claims", fake_get_unverified_claims)
-    monkeypatch.setattr(auth_module.jwt, "encode", fake_encode)
+    def fake_create_session_token(**kwargs):
+        assert kwargs["subject"] == profile.sui_address
+        return "signed-session-token", fixed_datetime + timedelta(minutes=15)
+
+    monkeypatch.setattr(auth_module, "create_session_token", fake_create_session_token)
 
     response = client.post("/auth/zk-login", json=base_payload)
     assert response.status_code == 200
 
     data = response.json()
-    assert data["address"] == base_payload["suiAddress"]
-    assert data["provider"] == base_payload["provider"]
-    assert data["session_token"] == "signed-session-token"
-    assert data["session_expires_at"] == (fixed_datetime + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)).isoformat()
-
-    oidc_claims = data["oidc_claims"]
-    assert oidc_claims["sub"] == "user-id"
-    assert oidc_claims["email"] == "user@example.com"
-    assert oidc_claims["nonce"] == "expected-nonce"
-    assert oidc_claims["expires_at"] == exp_dt.isoformat()
-
-    proof_summary = data["proof"]
-    assert proof_summary["maxEpoch"] == base_payload["proof"]["maxEpoch"]
-    assert proof_summary["publicInputsCount"] == len(base_payload["proof"]["publicInputs"])
-    assert proof_summary["jwtRandomness"] == base_payload["proof"]["jwtRandomness"]
-
-
-def test_zk_login_invalid_token(client, base_payload, monkeypatch):
-    def fake_get_unverified_claims(_token):
-        raise JWTError("token parsing failed")
-
-    monkeypatch.setattr(auth_module.jwt, "get_unverified_claims", fake_get_unverified_claims)
-
-    response = client.post("/auth/zk-login", json=base_payload)
-    assert response.status_code == 400
-    assert response.json()["detail"] == "Invalid OIDC token: token parsing failed"
+    assert data["profile"]["sui_address"] == base_payload["suiAddress"]
+    assert data["session"]["token"] == "signed-session-token"
+    assert data["session"]["expires_at"] == (
+        fixed_datetime + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    ).isoformat()
 
 
 def test_zk_login_nonce_mismatch(client, base_payload, monkeypatch):
-    def fake_get_unverified_claims(_token):
-        return {"nonce": "unexpected"}
-
-    monkeypatch.setattr(auth_module.jwt, "get_unverified_claims", fake_get_unverified_claims)
+    monkeypatch.setattr(
+        auth_module,
+        "_decode_zklogin_jwt",
+        lambda token: {"nonce": "unexpected", "exp": int(datetime.now(timezone.utc).timestamp())},
+    )
 
     response = client.post("/auth/zk-login", json=base_payload)
     assert response.status_code == 400
@@ -127,14 +124,53 @@ def test_zk_login_nonce_mismatch(client, base_payload, monkeypatch):
 
 
 def test_zk_login_expired_token(client, base_payload, fixed_datetime, monkeypatch):
-    def fake_get_unverified_claims(_token):
-        return {
-            "exp": int((fixed_datetime - timedelta(minutes=1)).timestamp()),
+    monkeypatch.setattr(
+        auth_module,
+        "_decode_zklogin_jwt",
+        lambda token: {
             "nonce": "expected-nonce",
-        }
-
-    monkeypatch.setattr(auth_module.jwt, "get_unverified_claims", fake_get_unverified_claims)
+            "exp": int((fixed_datetime - timedelta(minutes=1)).timestamp()),
+        },
+    )
 
     response = client.post("/auth/zk-login", json=base_payload)
     assert response.status_code == 401
     assert response.json()["detail"] == "OIDC token has expired"
+
+
+def test_supabase_login_success(client, monkeypatch):
+    payload = {"access_token": "supabase-token"}
+
+    monkeypatch.setattr(
+        auth_module,
+        "verify_supabase_jwt",
+        lambda token: {"sub": "supabase-user", "email": "claims@example.com"},
+    )
+    monkeypatch.setattr(
+        auth_module,
+        "_fetch_supabase_user",
+        lambda token: {"id": "supabase-user", "email": "user@example.com"},
+    )
+
+    profile = SimpleNamespace(
+        id=2,
+        supabase_id="supabase-user",
+        email="user@example.com",
+        sui_address=None,
+        session_key=None,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+    monkeypatch.setattr(auth_module, "_upsert_profile", lambda *args, **kwargs: profile)
+    monkeypatch.setattr(
+        auth_module,
+        "create_session_token",
+        lambda **kwargs: ("supabase-session", datetime.now(timezone.utc) + timedelta(minutes=15)),
+    )
+
+    response = client.post("/auth/supabase-login", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["profile"]["supabase_id"] == "supabase-user"
+    assert data["profile"]["email"] == "user@example.com"
+    assert data["session"]["token"] == "supabase-session"

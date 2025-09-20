@@ -1,149 +1,176 @@
-﻿from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, status
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional
+
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, status
 from jose import JWTError, jwt
-from pydantic import BaseModel, Field, validator
+from sqlalchemy.orm import Session
 
 from ..config import settings
-
+from ..db import get_db
+from ..models import UserProfile
+from ..schemas import (
+    AuthSession,
+    SupabaseLoginRequest,
+    SupabaseLoginResponse,
+    UserProfileRead,
+    ZkLoginRequest,
+    ZkLoginResponse,
+)
+from ..security import create_session_token, verify_supabase_jwt
 
 router = APIRouter()
 
 
-class ZkLoginProof(BaseModel):
-    proof: Dict[str, Any] = Field(..., description="zkLogin proof payload returned by the Sui SDK")
-    public_inputs: Optional[List[str]] = Field(None, alias="publicInputs", description="Public inputs used to verify the proof")
-    max_epoch: Optional[int] = Field(None, alias="maxEpoch", description="Upper bound epoch for which the proof is valid")
-    jwt_randomness: Optional[str] = Field(None, alias="jwtRandomness", description="Randomness used when generating the JWT")
+async def _fetch_supabase_user(access_token: str) -> Dict[str, Any]:
+    url = f"{settings.SUPABASE_URL.rstrip('/')}/auth/v1/user"
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "apikey": settings.SUPABASE_SERVICE_ROLE_KEY,
+    }
 
-    class Config:
-        allow_population_by_field_name = True
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        response = await client.get(url, headers=headers)
+        if response.status_code == status.HTTP_200_OK:
+            return response.json()
 
-    @validator("proof")
-    def validate_proof(cls, value: Dict[str, Any]) -> Dict[str, Any]:
-        if not value:
-            raise ValueError("proof cannot be empty")
-        return value
-
-    @validator("public_inputs")
-    def validate_public_inputs(cls, value: Optional[List[str]]) -> Optional[List[str]]:
-        if value is not None and not value:
-            raise ValueError("publicInputs cannot be empty")
-        return value
-
-    @validator("max_epoch")
-    def validate_max_epoch(cls, value: Optional[int]) -> Optional[int]:
-        if value is not None and value <= 0:
-            raise ValueError("maxEpoch must be a positive integer")
-        return value
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Supabase access token is invalid or expired",
+    )
 
 
-class ZkLoginRequest(BaseModel):
-    provider: str = Field(..., description="OIDC provider used for the zkLogin flow")
-    jwt: str = Field(..., description="OIDC ID token associated with the zkLogin proof")
-    nonce: str = Field(..., description="Nonce supplied to the OIDC provider when generating the proof")
-    address: str = Field(..., alias="suiAddress", description="Sui address derived from the zkLogin proof")
-    session_key: str = Field(..., alias="sessionKey", description="Ephemeral public key bound to the session on-chain")
-    signature: str = Field(..., description="Signature proving control of the derived address and session key")
-    proof: ZkLoginProof
+def _upsert_profile(
+    db: Session,
+    *,
+    supabase_id: Optional[str],
+    email: Optional[str],
+    sui_address: Optional[str],
+    session_key: Optional[str],
+) -> UserProfile:
+    profile: Optional[UserProfile] = None
 
-    class Config:
-        allow_population_by_field_name = True
+    if supabase_id:
+        profile = db.query(UserProfile).filter(UserProfile.supabase_id == supabase_id).one_or_none()
 
-    @validator("provider", "jwt", "nonce", "session_key", "signature", pre=True)
-    def validate_non_empty(cls, value: str) -> str:
-        if isinstance(value, str):
-            stripped = value.strip()
-            if not stripped:
-                raise ValueError("value cannot be empty")
-            return stripped
-        raise ValueError("value must be a string")
+    if profile is None and sui_address:
+        profile = db.query(UserProfile).filter(UserProfile.sui_address == sui_address).one_or_none()
 
-    @validator("address")
-    def validate_address(cls, value: str) -> str:
-        if not isinstance(value, str):
-            raise ValueError("address must be a string")
-        stripped = value.strip().lower()
-        if not stripped.startswith("0x"):
-            raise ValueError("address must start with 0x")
-        hex_part = stripped[2:]
-        if not hex_part:
-            raise ValueError("address must contain hexadecimal characters after 0x")
+    if profile is None:
+        profile = UserProfile(
+            supabase_id=supabase_id,
+            email=email,
+            sui_address=sui_address,
+            session_key=session_key,
+        )
+        db.add(profile)
+    else:
+        if supabase_id and profile.supabase_id != supabase_id:
+            profile.supabase_id = supabase_id
+        if email and profile.email != email:
+            profile.email = email
+        if sui_address and profile.sui_address != sui_address:
+            profile.sui_address = sui_address
+        if session_key and profile.session_key != session_key:
+            profile.session_key = session_key
+
+    db.commit()
+    db.refresh(profile)
+    return profile
+
+
+@router.post("/supabase-login", response_model=SupabaseLoginResponse)
+async def supabase_login(payload: SupabaseLoginRequest, db: Session = Depends(get_db)):
+    claims = await verify_supabase_jwt(payload.access_token)
+    supabase_user = await _fetch_supabase_user(payload.access_token)
+
+    supabase_id = str(claims.get("sub"))
+    email = supabase_user.get("email") or claims.get("email")
+
+    profile = _upsert_profile(
+        db,
+        supabase_id=supabase_id,
+        email=email,
+        sui_address=None,
+        session_key=None,
+    )
+
+    token, expires_at = create_session_token(
+        subject=supabase_id,
+        provider="supabase",
+        extra_claims={"profile_id": profile.id},
+    )
+
+    return SupabaseLoginResponse(
+        profile=UserProfileRead.model_validate(profile),
+        session=AuthSession(token=token, expires_at=expires_at),
+    )
+
+
+def _decode_zklogin_jwt(token: str) -> Dict[str, Any]:
+    public_key = settings.ZKLOGIN_JWT_PUBLIC_KEY
+    options: Dict[str, Any] = {"verify_signature": bool(public_key)}
+    if public_key:
         try:
-            int(hex_part, 16)
-        except ValueError as exc:
-            raise ValueError("address must be a valid hexadecimal string") from exc
-        return "0x" + hex_part
+            return jwt.decode(
+                token,
+                public_key,
+                algorithms=["RS256"],
+                options=options,
+                audience=settings.ZKLOGIN_JWT_AUDIENCE,
+                issuer=settings.ZKLOGIN_JWT_ISSUER,
+            )
+        except JWTError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Invalid zkLogin token: {exc}",
+            ) from exc
+
+    return jwt.get_unverified_claims(token)
 
 
-@router.post("/zk-login")
-def zk_login(payload: ZkLoginRequest):
-    try:
-        claims = jwt.get_unverified_claims(payload.jwt)
-    except JWTError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid OIDC token: {exc}",
-        ) from exc
-
+@router.post("/zk-login", response_model=ZkLoginResponse)
+async def zk_login(payload: ZkLoginRequest, db: Session = Depends(get_db)):
+    claims = _decode_zklogin_jwt(payload.jwt)
     now = datetime.now(timezone.utc)
 
     exp_timestamp = claims.get("exp")
     if exp_timestamp is not None:
-        try:
-            exp_dt = datetime.fromtimestamp(exp_timestamp, tz=timezone.utc)
-        except (TypeError, ValueError) as exc:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid exp claim in OIDC token",
-            ) from exc
+        exp_dt = datetime.fromtimestamp(exp_timestamp, tz=timezone.utc)
         if exp_dt <= now:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="OIDC token has expired",
             )
     else:
-        exp_dt = now + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        exp_dt = now
 
     nonce_claim = claims.get("nonce")
-    if nonce_claim and nonce_claim != payload.nonce:
+    if nonce_claim != payload.nonce:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Nonce mismatch between proof and OIDC token",
         )
 
-    session_expiration = now + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    session_payload = {
-        "sub": claims.get("sub"),
-        "provider": payload.provider,
-        "sui_address": payload.address,
-        "session_key": payload.session_key,
-        "iat": int(now.timestamp()),
-        "exp": int(session_expiration.timestamp()),
-    }
-    session_token = jwt.encode(
-        session_payload,
-        settings.SECRET_KEY,
-        algorithm=settings.ALGORITHM,
+    profile = _upsert_profile(
+        db,
+        supabase_id=None,
+        email=claims.get("email"),
+        sui_address=payload.sui_address,
+        session_key=payload.session_key,
     )
 
-    proof_summary = {
-        "maxEpoch": payload.proof.max_epoch,
-        "publicInputsCount": len(payload.proof.public_inputs) if payload.proof.public_inputs else 0,
-        "jwtRandomness": payload.proof.jwt_randomness,
-    }
+    subject = profile.sui_address or str(profile.id)
+    token, expires_at = create_session_token(
+        subject=subject,
+        provider=payload.provider,
+        session_key=payload.session_key,
+        extra_claims={"profile_id": profile.id},
+    )
 
-    return {
-        "address": payload.address,
-        "provider": payload.provider,
-        "session_token": session_token,
-        "session_expires_at": session_expiration.isoformat(),
-        "oidc_claims": {
-            "sub": claims.get("sub"),
-            "email": claims.get("email"),
-            "nonce": nonce_claim,
-            "expires_at": exp_dt.isoformat() if exp_dt else None,
-        },
-        "proof": proof_summary,
-    }
+    return ZkLoginResponse(
+        profile=UserProfileRead.model_validate(profile),
+        session=AuthSession(token=token, expires_at=expires_at),
+    )
