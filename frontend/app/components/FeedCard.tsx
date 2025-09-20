@@ -64,7 +64,7 @@ export function FeedCard({
     footer !== undefined ? (
       footer
     ) : (
-      <div className="flex items-center gap-6 text-sm text-slate-500">
+      <div className="flex items-center gap-6 pl-3 text-sm text-slate-500">
         <button
           type="button"
           onClick={handleLikeClick}
@@ -102,7 +102,7 @@ export function FeedCard({
             <span className="text-sm font-medium text-slate-500">{name.slice(0, 1)}</span>
           )}
         </div>
-        <div className="text-sm font-medium text-slate-700">{name}</div>
+        <div className="text-sm font-bold text-slate-900">{name}</div>
       </div>
 
       <div className="rounded-2xl bg-white p-3 text-sm leading-relaxed text-slate-800">

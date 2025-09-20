@@ -16,19 +16,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="relative mx-auto flex min-h-screen max-w-[420px] flex-col bg-white">
           <header className="flex items-center gap-3 border-b border-slate-200 p-4">
             <Image
-              src="/sui-world-letter.png"
-              alt="SuiWorld lettering"
-              width={120}
-              height={32}
-              className="h-8 w-auto"
-              priority
-            />
-            <Image
               src="/sui-world-logo.png"
               alt="SuiWorld logo"
               width={48}
               height={48}
               className="h-10 w-10"
+              priority
+            />
+            <Image
+              src="/sui-world-letter.png"
+              alt="SuiWorld lettering"
+              width={60}
+              height={16}
+              className="h-4 w-auto"
               priority
             />
             <div className="flex-1">
